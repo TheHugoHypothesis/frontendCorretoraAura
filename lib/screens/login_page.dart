@@ -4,7 +4,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 // Importe a página de cadastro. Ajuste o nome da classe se for diferente de SignUpPage.
-import 'package:aura_frontend/screens/cadastro_page.dart'; 
+import 'package:aura_frontend/screens/cadastro_page.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+
+Widget _buildTextField({
+  required TextEditingController controller,
+  required String hintText,
+  required IconData icon,
+  required ThemeData theme,
+  required Color fieldColor,
+  required Color primaryColor,
+  Widget? suffixIcon,
+  bool obscureText = false,
+  TextInputType keyboardType =
+      TextInputType.text, // Adicionado para flexibilidade
+  List<TextInputFormatter>? inputFormatters, // Adicionado para flexibilidade
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    decoration: BoxDecoration(
+      color: fieldColor,
+      borderRadius: BorderRadius.circular(14), // Bordas arredondadas
+      border: Border.all(
+        color: theme.brightness == Brightness.dark
+            ? Colors.white12
+            : Colors.grey.shade300,
+        width: 1,
+      ),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: primaryColor, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            obscureText: obscureText,
+            keyboardType: keyboardType, // Usando o parâmetro
+            inputFormatters: inputFormatters, // Usando o parâmetro
+            style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
+            decoration: InputDecoration(
+              hintText: hintText,
+              border: InputBorder.none,
+              hintStyle: TextStyle(
+                color: theme.brightness == Brightness.dark
+                    ? Colors.grey.shade500
+                    : Colors.grey.shade600,
+              ),
+            ),
+          ),
+        ),
+        if (suffixIcon != null) suffixIcon,
+      ],
+    ),
+  );
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,18 +69,25 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   // Controladores para os campos de texto
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _cpfController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  var cpfMaskFormatter = MaskTextInputFormatter(
+      mask: '###.###.###-##', // Máscara XXX.XXX.XXX-XX
+      filter: {"#": RegExp(r'[0-9]')},
+      type: MaskAutoCompletionType.lazy);
 
   // Variável para controlar a visibilidade da senha
   bool _isPasswordVisible = false;
-  
+
   // Função de simulação de login
   void _handleLogin() {
-    final email = _emailController.text;
+    final cpf = _cpfController.text;
     final password = _passwordController.text;
 
-    if (email.isNotEmpty && password.isNotEmpty) {
+    final rawCpf = cpfMaskFormatter.getUnmaskedText();
+
+    if (rawCpf.length == 11 && password.isNotEmpty) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => const HomePage(),
@@ -34,7 +95,8 @@ class _LoginPageState extends State<LoginPage> {
             const begin = Offset(0.0, 0.08);
             const end = Offset.zero;
             final curve = Curves.easeInOutCubic;
-            final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            final tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
 
             return FadeTransition(
               opacity: animation,
@@ -67,8 +129,9 @@ class _LoginPageState extends State<LoginPage> {
   void _navigateToSignUp() {
     Navigator.of(context).push(
       CupertinoPageRoute(
-        builder: (context) => const SignUpPage(), // Usando 'SignUpPage' para consistência
-        title: 'Criar Conta', 
+        builder: (context) =>
+            const SignUpPage(), // Usando 'SignUpPage' para consistência
+        title: 'Criar Conta',
       ),
     );
   }
@@ -76,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark; 
+    final isDark = theme.brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.black : Colors.white;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final secondaryColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
@@ -91,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 80),
-              
+
               // Título "Apple Like"
               Text(
                 "Aura\nImobiliária",
@@ -102,26 +165,27 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               Text(
                 "Bem-vindo(a) de volta, corretor.",
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: secondaryColor,
                 ),
               ),
-              
+
               const SizedBox(height: 60),
 
               // Campo de E-mail
               _buildTextField(
-                controller: _emailController,
-                hintText: "E-mail ou CPF",
+                controller: _cpfController, // Usando o controlador de CPF
+                hintText: "CPF", // Alterado o hint
                 icon: CupertinoIcons.person_fill,
                 theme: theme,
                 fieldColor: fieldColor,
                 primaryColor: primaryColor,
-                // Ajustando o tipo de teclado para e-mail padrão
-                keyboardType: TextInputType.emailAddress, 
+                keyboardType:
+                    TextInputType.number, // Alterado para teclado numérico
+                inputFormatters: [cpfMaskFormatter], // Aplicando a máscara
               ),
               const SizedBox(height: 16),
 
@@ -136,8 +200,8 @@ class _LoginPageState extends State<LoginPage> {
                 primaryColor: primaryColor,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isPasswordVisible 
-                        ? CupertinoIcons.eye_slash_fill 
+                    _isPasswordVisible
+                        ? CupertinoIcons.eye_slash_fill
                         : CupertinoIcons.eye_fill,
                     color: secondaryColor,
                     size: 20,
@@ -149,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
               ),
-              
+
               const SizedBox(height: 12),
 
               // Botão Esqueceu a Senha
@@ -163,9 +227,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     "Esqueceu a senha?",
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: primaryColor,
-                      fontWeight: FontWeight.w500
-                    ),
+                        color: primaryColor, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -177,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 56,
                 child: CupertinoButton(
-                  color: primaryColor, 
+                  color: primaryColor,
                   onPressed: _handleLogin,
                   borderRadius: BorderRadius.circular(14), // Borda mais suave
                   child: Text(
@@ -189,12 +251,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16), // Espaçamento entre botões
 
               // NOVO: Botão de Cadastro (Secundário, Estilo Texto)
               _buildSignUpButton(theme, primaryColor),
-              
+
               const SizedBox(height: 32),
             ],
           ),
@@ -230,57 +292,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
-
-// Widget auxiliar para construir os campos de texto no estilo "Apple Like"
-Widget _buildTextField({
-  required TextEditingController controller,
-  required String hintText,
-  required IconData icon,
-  required ThemeData theme,
-  required Color fieldColor,
-  required Color primaryColor,
-  Widget? suffixIcon,
-  bool obscureText = false,
-  TextInputType keyboardType = TextInputType.text, // Adicionado para flexibilidade
-  List<TextInputFormatter>? inputFormatters, // Adicionado para flexibilidade
-}) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: BoxDecoration(
-      color: fieldColor,
-      borderRadius: BorderRadius.circular(14), // Bordas arredondadas
-      border: Border.all(
-        color: theme.brightness == Brightness.dark 
-              ? Colors.white12 
-              : Colors.grey.shade300,
-        width: 1,
-      ),
-    ),
-    child: Row(
-      children: [
-        Icon(icon, color: primaryColor, size: 20),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            keyboardType: keyboardType, // Usando o parâmetro
-            inputFormatters: inputFormatters, // Usando o parâmetro
-            style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
-            decoration: InputDecoration(
-              hintText: hintText,
-              border: InputBorder.none,
-              hintStyle: TextStyle(
-                color: theme.brightness == Brightness.dark 
-                    ? Colors.grey.shade500 
-                    : Colors.grey.shade600,
-              ),
-            ),
-          ),
-        ),
-        if (suffixIcon != null) suffixIcon,
-      ],
-    ),
-  );
 }

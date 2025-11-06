@@ -1,5 +1,7 @@
 import 'package:aura_frontend/screens/cadastro_page.dart';
+import 'package:aura_frontend/screens/home.dart';
 import 'package:aura_frontend/screens/login_page.dart';
+import 'package:aura_frontend/screens/propriety_registration_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_frontend/screens/onboarding.dart';
@@ -82,7 +84,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const LoginPage(),
+      home: const PropertyRegistrationPage(),
     );
   }
 }
