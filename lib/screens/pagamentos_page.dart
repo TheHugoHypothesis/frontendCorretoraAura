@@ -8,18 +8,22 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:pdf/pdf.dart';
 
-class PagamentosPage extends StatefulWidget {
-  const PagamentosPage({super.key});
+// 🚨 MUDANÇA DE NOME: De PagamentosPage para PagamentoContent 🚨
+// Isso resolve o erro de compilação na HomePage e remove o Scaffold/AppBar.
+
+class PagamentoContent extends StatefulWidget {
+  const PagamentoContent({super.key}); // Use 'const' no construtor
 
   @override
-  State<PagamentosPage> createState() => _PagamentosPageState();
+  State<PagamentoContent> createState() => _PagamentoContentState();
 }
 
-class _PagamentosPageState extends State<PagamentosPage> {
+class _PagamentoContentState extends State<PagamentoContent> {
   int _filterTipoIndex = 0;
   int _filterStatusIndex = 0;
   String _ordenarPor = 'data';
 
+  // Seus dados e lógica de estado permanecem aqui
   final List<Map<String, dynamic>> _transacoes = [
     {
       'titulo': 'Aluguel - Apto 302',
@@ -50,7 +54,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
     final isDark = theme.brightness == Brightness.dark;
     final formato = NumberFormat.simpleCurrency(locale: 'pt_BR');
 
-    // Filtra e ordena dinamicamente
+    // Lógica de filtro e ordenação (mantida)
     final transacoesFiltradas = _transacoes.where((t) {
       if (_filterTipoIndex == 1 && t['tipo'] != 'entrada') return false;
       if (_filterTipoIndex == 2 && t['tipo'] != 'saida') return false;
@@ -63,7 +67,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
           ? b['data'].compareTo(a['data'])
           : b['valor'].compareTo(a['valor']));
 
-    // Calcula totais
+    // Lógica de cálculo (mantida)
     final totalEntradas = _transacoes
         .where((t) => t['tipo'] == 'entrada')
         .fold(0.0, (s, t) => s + t['valor']);
@@ -72,72 +76,82 @@ class _PagamentosPageState extends State<PagamentosPage> {
         .fold(0.0, (s, t) => s + t['valor']);
     final saldo = totalEntradas - totalSaidas;
 
-    return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Fluxo de Pagamentos'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(CupertinoIcons.doc_text_viewfinder),
-            onPressed: () => _gerarRelatorio(transacoesFiltradas),
+    // 🚨 Conteúdo da página: Removido o Scaffold/AppBar
+    return SafeArea(
+      child: Column(
+        children: [
+          // 🔹 HEADER/APPBAR CUSTOMIZADA (Recriado para manter o visual)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Fluxo de Pagamentos',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(CupertinoIcons.doc_text_viewfinder),
+                  onPressed: () => _gerarRelatorio(transacoesFiltradas),
+                ),
+              ],
+            ),
+          ),
+          
+          // 🔹 BODY
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                children: [
+                  // Resumo financeiro
+                  _buildResumoFinanceiro(
+                      isDark, formato, totalEntradas, totalSaidas, saldo),
+
+                  const SizedBox(height: 20),
+
+                  // Filtros combinados
+                  _buildFiltros(),
+
+                  const SizedBox(height: 16),
+
+                  // Lista de Transações
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: transacoesFiltradas.isEmpty
+                          ? const Center(
+                              child: Text("Nenhuma transação encontrada."),
+                            )
+                          : ListView.builder(
+                              key: ValueKey(transacoesFiltradas.length),
+                              itemCount: transacoesFiltradas.length,
+                              itemBuilder: (context, index) {
+                                final t = transacoesFiltradas[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildCardTransacao(t, formato, isDark),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Column(
-            children: [
-              _buildResumoFinanceiro(
-                  isDark, formato, totalEntradas, totalSaidas, saldo),
-
-              const SizedBox(height: 20),
-
-              // FILTROS COMBINADOS
-              _buildFiltros(),
-
-              const SizedBox(height: 16),
-
-              // LISTA DE TRANSAÇÕES
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: transacoesFiltradas.isEmpty
-                      ? const Center(
-                          child: Text("Nenhuma transação encontrada."),
-                        )
-                      : ListView.builder(
-                          key: ValueKey(transacoesFiltradas.length),
-                          itemCount: transacoesFiltradas.length,
-                          itemBuilder: (context, index) {
-                            final t = transacoesFiltradas[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildCardTransacao(t, formato, isDark),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-
-      // ➕ BOTÃO ADICIONAR
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: isDark ? Colors.white10 : Colors.black87,
-        onPressed: _adicionarTransacao,
-        child: const Icon(CupertinoIcons.add, color: Colors.white),
       ),
     );
   }
 
+  // Seus métodos auxiliares (mantidos)
+
   Widget _buildResumoFinanceiro(bool isDark, NumberFormat formato,
       double entradas, double saidas, double saldo) {
+    // ... (o código deste método é o mesmo)
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -235,6 +249,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
 
   Widget _buildCardTransacao(
       Map<String, dynamic> t, NumberFormat formato, bool isDark) {
+    // ... (o código deste método é o mesmo)
     final statusColor = {
       'pago': Colors.greenAccent,
       'pendente': Colors.orangeAccent,
@@ -313,6 +328,9 @@ class _PagamentosPageState extends State<PagamentosPage> {
     );
   }
 
+  // ➕ BOTÃO ADICIONAR (Você não precisa disso aqui, pois o botão deve
+  // estar no FloatingActionButton do Scaffold da HomePage, mas mantive a função
+  // para você usá-la se quiser).
   void _adicionarTransacao() {
     showCupertinoModalPopup(
       context: context,
@@ -341,10 +359,11 @@ class _PagamentosPageState extends State<PagamentosPage> {
     );
   }
 
+  // Geração de PDF (mantida)
   void _gerarRelatorio(List<Map<String, dynamic>> transacoes) async {
+    // ... (o código deste método é o mesmo)
     final pdf = pw.Document();
 
-    // 🔹 Cabeçalho + data atual
     final dataAtual = DateTime.now();
     final dataFormatada =
         "${dataAtual.day.toString().padLeft(2, '0')}-${dataAtual.month.toString().padLeft(2, '0')}-${dataAtual.year}";
@@ -362,7 +381,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
 
     final saldo = entradas - saidas;
 
-    // 🔹 Montagem do PDF
+    // Montagem do PDF
     pdf.addPage(
       pw.MultiPage(
         margin: const pw.EdgeInsets.all(24),
@@ -388,7 +407,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
                 t['tipo'] == 'entrada' ? 'Entrada' : 'Saída',
                 t['valor'].toStringAsFixed(2),
                 t['status'].toUpperCase(),
-                t['data']
+                DateFormat('dd/MM/yyyy').format(t['data']), // Formatando a data
               ];
             }).toList(),
             headerStyle: pw.TextStyle(
@@ -406,7 +425,7 @@ class _PagamentosPageState extends State<PagamentosPage> {
 
           pw.Divider(),
 
-          // 🔹 Resumo financeiro
+          // Resumo financeiro
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
@@ -453,12 +472,12 @@ class _PagamentosPageState extends State<PagamentosPage> {
       ),
     );
 
-    // 🔹 Salvar o arquivo
+    // Salvar o arquivo
     final dir = await getApplicationDocumentsDirectory();
     final file = File("${dir.path}/relatorio_financeiro_$dataFormatada.pdf");
     await file.writeAsBytes(await pdf.save());
 
-    // 🔹 Abrir o arquivo automaticamente
+    // Abrir o arquivo automaticamente
     await OpenFilex.open(file.path);
   }
 }
