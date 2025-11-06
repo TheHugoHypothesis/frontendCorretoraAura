@@ -14,16 +14,16 @@ class HomeBottomNavBar extends StatelessWidget {
   });
 
   final List<IconData> _icons = const [
-    CupertinoIcons.house, 
-    CupertinoIcons.doc_text, 
-    CupertinoIcons.money_dollar, 
-    CupertinoIcons.person, 
+    CupertinoIcons.house,
+    CupertinoIcons.doc_text,
+    CupertinoIcons.money_dollar,
+    CupertinoIcons.person,
   ];
 
   final List<String> _labels = const [
     'Home',
-    'Contr',
-    'Pagam',
+    'Contrato',
+    'Pagamentos',
     'Perfil',
   ];
 
@@ -58,11 +58,11 @@ class HomeBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_icons.length, (index) {
               // Usa o selectedIndex que veio do widget pai
-              final isActive = selectedIndex == index; 
+              final isActive = selectedIndex == index;
               return Expanded(
                 child: GestureDetector(
                   // 🚨 CHAMA O CALLBACK PARA MUDAR O ESTADO NO PAI 🚨
-                  onTap: () => onItemTapped(index), 
+                  onTap: () => onItemTapped(index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
@@ -112,7 +112,7 @@ class HomeBottomNavBar extends StatelessWidget {
                               _labels[index],
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                height: 1.0, 
+                                height: 1.0,
                                 color: isDark ? Colors.white70 : Colors.black87,
                                 fontWeight: FontWeight.w500,
                               ),
