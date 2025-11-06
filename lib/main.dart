@@ -1,3 +1,5 @@
+import 'package:aura_frontend/screens/cadastro_page.dart';
+import 'package:aura_frontend/screens/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_frontend/screens/onboarding.dart';
@@ -12,7 +14,7 @@ Future<void> main() async {
 
   // Define opções de tamanho e posição da janela
   const windowOptions = WindowOptions(
-    size: Size(450, 844), // tamanho padrão tipo celular
+    size: Size(450, 644), // tamanho padrão tipo celular
     center: true,
     backgroundColor: Colors.transparent,
     title: 'Aura Corretora Imobiliária',
@@ -22,7 +24,7 @@ Future<void> main() async {
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
-    await windowManager.setSize(const Size(450, 844));
+    await windowManager.setSize(const Size(450, 644));
     await windowManager.center();
 
     // Evita redimensionar (opcional)
@@ -80,7 +82,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const OnboardingPage(),
+      home: const LoginPage(),
     );
   }
 }
