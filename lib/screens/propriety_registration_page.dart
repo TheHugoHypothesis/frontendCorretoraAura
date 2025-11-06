@@ -1,3 +1,4 @@
+import 'package:aura_frontend/screens/MapLocationPicker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,8 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 import 'dart:io'; // Para o tipo File
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geocoding/geocoding.dart';
 
 // --- Widget Auxiliar Reutilizável (Importado de outros arquivos) ---
 // Note: Você deve garantir que este widget esteja acessível por import ou
@@ -190,6 +193,36 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
           const SnackBar(content: Text('Nova imagem adicionada!')),
         );
       }
+    }
+  }
+
+  void _openMapPicker() async {
+    // Coordenada inicial (Ex: Centro de SP)
+    LatLng initialLocation = const LatLng(-23.5505, -46.6333);
+
+    // Se já tivermos a cidade/bairro, podemos tentar uma geocodificação inicial aqui
+
+    final SelectedLocation? result = await Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => MapLocationPicker(initialCenter: initialLocation),
+      ),
+    );
+
+    if (result != null) {
+      // Preenche os TextControllers com o resultado da geocodificação
+      setState(() {
+        _cepController.text = result.cep;
+        _logradouroController.text = result.logradouro;
+        // Nota: 'Cidade' e 'Bairro' viriam aqui, mas como você só tinha logradouro/CEP/número,
+        // você precisaria de mais controladores (ex: _cidadeController, _bairroController)
+        // Se não, armazene em variáveis e preencha os hints/valores de exibição.
+
+        // Armazenamos a coordenada para uso futuro (ex: visualização estática)
+        // _selectedCoordinates = result.coordinates;
+
+        // O 'Número' e 'Complemento' ainda teriam que ser digitados, pois o geocoding
+        // só retorna o logradouro.
+      });
     }
   }
 
@@ -468,27 +501,18 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                   const SizedBox(height: 30),
 
                   // --- SEÇÃO 4: ENDEREÇO (São Paulo) ---
-                  _buildSectionHeader(theme, "Endereço (São Paulo - SP)"),
+                  _buildSectionHeader(theme, "Endereço (Seleção por Mapa)"),
                   const SizedBox(height: 16),
 
-                  _buildTextField(
-                    controller: _cepController,
-                    hintText: "CEP (#####-###)",
-                    icon: CupertinoIcons.location_solid,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [cepMaskFormatter],
+                  _buildPickerSelector(
                     theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _logradouroController,
-                    hintText: "Logradouro (Rua/Avenida)",
-                    icon: CupertinoIcons.map_fill,
-                    theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
+                    title: "Localização",
+                    // Mostra o logradouro preenchido ou um placeholder
+                    value: _logradouroController.text.isNotEmpty
+                        ? _logradouroController.text
+                        : "Clique para selecionar no mapa...",
+                    icon: CupertinoIcons.map_pin_ellipse,
+                    onTap: _openMapPicker, // Chama o seletor de mapa
                   ),
                   const SizedBox(height: 12),
                   Row(
