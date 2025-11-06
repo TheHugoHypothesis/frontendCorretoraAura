@@ -16,7 +16,7 @@ Future<void> main() async {
 
   // Define opções de tamanho e posição da janela
   const windowOptions = WindowOptions(
-    size: Size(450, 644), // tamanho padrão tipo celular
+    size: Size(450, 844), // tamanho padrão tipo celular
     center: true,
     backgroundColor: Colors.transparent,
     title: 'Aura Corretora Imobiliária',
@@ -26,7 +26,7 @@ Future<void> main() async {
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
-    await windowManager.setSize(const Size(450, 644));
+    await windowManager.setSize(const Size(450, 844));
     await windowManager.center();
 
     // Evita redimensionar (opcional)

@@ -1,13 +1,14 @@
 import 'package:aura_frontend/screens/MapLocationPicker.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
 import 'dart:io'; // Para o tipo File
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geocoding/geocoding.dart';
 
 // --- Widget Auxiliar Reutilizável (Importado de outros arquivos) ---
 // Note: Você deve garantir que este widget esteja acessível por import ou
@@ -135,7 +136,13 @@ class PropertyRegistrationPage extends StatefulWidget {
 class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
   // Controladores de Texto
   final TextEditingController _matriculaController = TextEditingController();
-  final TextEditingController _valorVenalController = TextEditingController();
+  final MoneyMaskedTextController _valorVenalController =
+      MoneyMaskedTextController(
+    decimalSeparator: ',', // Vírgula para decimal
+    thousandSeparator: '.', // Ponto para milhar
+    leftSymbol: 'R\$ ', // Símbolo do Real
+    precision: 2, // Duas casas decimais
+  );
   final TextEditingController _numReformasController = TextEditingController();
   final TextEditingController _numQuartosController = TextEditingController();
   final TextEditingController _metragemController = TextEditingController();
@@ -145,6 +152,8 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
   final TextEditingController _logradouroController = TextEditingController();
   final TextEditingController _numeroController = TextEditingController();
   final TextEditingController _complementoController = TextEditingController();
+  final TextEditingController _cidadeController = TextEditingController();
+  final TextEditingController _bairroController = TextEditingController();
 
   // Seletores (Cupertino-style)
   String? _tipoImovel; // Casa, Apartamento, Sala Comercial, etc.
@@ -200,8 +209,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     // Coordenada inicial (Ex: Centro de SP)
     LatLng initialLocation = const LatLng(-23.5505, -46.6333);
 
-    // Se já tivermos a cidade/bairro, podemos tentar uma geocodificação inicial aqui
-
     final SelectedLocation? result = await Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (context) => MapLocationPicker(initialCenter: initialLocation),
@@ -209,20 +216,26 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     );
 
     if (result != null) {
-      // Preenche os TextControllers com o resultado da geocodificação
+      // PREENCHE TODOS OS CAMPOS DE ENDEREÇO
       setState(() {
         _cepController.text = result.cep;
         _logradouroController.text = result.logradouro;
-        // Nota: 'Cidade' e 'Bairro' viriam aqui, mas como você só tinha logradouro/CEP/número,
-        // você precisaria de mais controladores (ex: _cidadeController, _bairroController)
-        // Se não, armazene em variáveis e preencha os hints/valores de exibição.
 
-        // Armazenamos a coordenada para uso futuro (ex: visualização estática)
-        // _selectedCoordinates = result.coordinates;
+        // ADICIONAR ESTAS DUAS LINHAS:
+        _cidadeController.text = result.cidade;
+        _bairroController.text = result.bairro;
 
-        // O 'Número' e 'Complemento' ainda teriam que ser digitados, pois o geocoding
-        // só retorna o logradouro.
+        // O 'Número' e 'Complemento' são mantidos para preenchimento manual.
       });
+
+      // Opcional: Feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Localização definida: ${result.logradouro}, ${result.cidade}')),
+        );
+      }
     }
   }
 
@@ -360,7 +373,7 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                     controller: _valorVenalController,
                     hintText: "Valor Venal (R\$)",
                     icon: CupertinoIcons.money_dollar_circle_fill,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.text,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
@@ -500,21 +513,76 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- SEÇÃO 4: ENDEREÇO (São Paulo) ---
-                  _buildSectionHeader(theme, "Endereço (Seleção por Mapa)"),
+                  // --- SEÇÃO 4: ENDEREÇO (Seleção por Mapa/Manual) ---
+                  _buildSectionHeader(
+                      theme, "Endereço (Mapa ou Manual)"), // Título atualizado
                   const SizedBox(height: 16),
 
+                  // 1. Botão/Selector que abre o mapa
                   _buildPickerSelector(
                     theme: theme,
-                    title: "Localização",
-                    // Mostra o logradouro preenchido ou um placeholder
+                    title: "Localização no Mapa",
+                    // Mostra o endereço completo preenchido
                     value: _logradouroController.text.isNotEmpty
-                        ? _logradouroController.text
-                        : "Clique para selecionar no mapa...",
+                        ? "${_logradouroController.text}, ${_bairroController.text} - ${_cidadeController.text}"
+                        : "Toque para selecionar no mapa...",
                     icon: CupertinoIcons.map_pin_ellipse,
-                    onTap: _openMapPicker, // Chama o seletor de mapa
+                    onTap: _openMapPicker, // Chama a função que abre o mapa
                   ),
                   const SizedBox(height: 12),
+
+                  // LINHA 1: CEP e Bairro (AGORA EDITÁVEIS)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _cepController,
+                          hintText: "CEP", // Hint simples
+                          icon: CupertinoIcons.location_solid,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [cepMaskFormatter],
+                          theme: theme, fieldColor: fieldColor,
+                          primaryColor: primaryColor,
+                          // REMOVIDO: enabled: false
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _bairroController,
+                          hintText: "Bairro", // Hint simples
+                          icon: CupertinoIcons.placemark_fill,
+                          theme: theme, fieldColor: fieldColor,
+                          primaryColor: primaryColor,
+                          // REMOVIDO: enabled: false
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // CIDADE e LOGRADOURO (AGORA EDITÁVEIS)
+                  _buildTextField(
+                    controller: _cidadeController,
+                    hintText: "Cidade", // Hint simples
+                    icon: CupertinoIcons.building_2_fill,
+                    theme: theme, fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                    // REMOVIDO: enabled: false
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _logradouroController,
+                    hintText: "Logradouro", // Hint simples
+                    icon: CupertinoIcons.square_stack_fill,
+                    theme: theme, fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                    // REMOVIDO: enabled: false
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // LINHA 2: Número e Complemento (Já estavam manuais)
                   Row(
                     children: [
                       Expanded(
