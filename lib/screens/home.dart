@@ -2,9 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aura_frontend/screens/property_page.dart';
 import '../widgets/bottom_nav.dart';
-
-// 🚨 Importe os widgets de conteúdo das abas 🚨
-// Certifique-se de que o caminho de importação está correto no seu projeto.
 import 'contrato_page.dart'; 
 import 'pagamentos_page.dart'; 
 
@@ -18,9 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  // 🚨 CORREÇÃO 1: Removendo 'const' da lista de screens,
-  // pois os elementos podem não ser const (e para evitar erros se PagamentoContent
-  // e ContratoContent não usarem 'const' em seus construtores).
+
   final List<Widget> _screens = [
     const HomeScreenContent(),      // Índice 0: Home
     const ContratoContent(),        // Índice 1: Contratos (Se o construtor for const)
@@ -55,9 +50,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ----------------------------------------------------
-// HomeScreenContent (Conteúdo da Aba Home)
-// ----------------------------------------------------
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 

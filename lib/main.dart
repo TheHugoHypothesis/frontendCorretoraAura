@@ -1,4 +1,5 @@
 import 'package:aura_frontend/screens/cadastro_page.dart';
+import 'package:aura_frontend/screens/contract_registration_page.dart';
 import 'package:aura_frontend/screens/home.dart';
 import 'package:aura_frontend/screens/login_page.dart';
 import 'package:aura_frontend/screens/propriety_registration_page.dart';
@@ -84,7 +85,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const PropertyRegistrationPage(),
+      home: const ContractRegistrationPage(),
     );
   }
 }
