@@ -1,28 +1,26 @@
 import 'dart:ui';
-import 'package:aura_frontend/screens/contrato_page.dart';
-import 'package:aura_frontend/screens/home.dart';
-import 'package:aura_frontend/screens/pagamentos_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class HomeBottomNavBar extends StatefulWidget {
-  const HomeBottomNavBar({super.key});
+// Modificado para StatelessWidget e para receber o estado e o callback do pai
+class HomeBottomNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final void Function(int) onItemTapped;
 
-  @override
-  State<HomeBottomNavBar> createState() => _HomeBottomNavBarState();
-}
+  const HomeBottomNavBar({
+    required this.selectedIndex,
+    required this.onItemTapped,
+    super.key,
+  });
 
-class _HomeBottomNavBarState extends State<HomeBottomNavBar> {
-  int _selectedIndex = 0;
-
-  final List<IconData> _icons = [
-    CupertinoIcons.house, // outline (não filled)
-    CupertinoIcons.doc_text, // outline
-    CupertinoIcons.money_dollar, // outline
-    CupertinoIcons.person, // outline
+  final List<IconData> _icons = const [
+    CupertinoIcons.house, 
+    CupertinoIcons.doc_text, 
+    CupertinoIcons.money_dollar, 
+    CupertinoIcons.person, 
   ];
 
-  final List<String> _labels = [
+  final List<String> _labels = const [
     'Home',
     'Contr',
     'Pagam',
@@ -59,37 +57,16 @@ class _HomeBottomNavBarState extends State<HomeBottomNavBar> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_icons.length, (index) {
-              final isActive = _selectedIndex == index;
+              // Usa o selectedIndex que veio do widget pai
+              final isActive = selectedIndex == index; 
               return Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedIndex = index);
-
-                    Widget page;
-                    switch (index) {
-                      case 0:
-                        page = const HomePage();
-                        break;
-                      case 1:
-                        page = const ContratoPage();
-                        break;
-                      case 2:
-                        page = const PagamentosPage();
-                        break;
-                      default:
-                        page = const HomePage();
-                    }
-
-                    Navigator.pushReplacement(
-                      context,
-                      CupertinoPageRoute(builder: (_) => page),
-                    );
-                  },
+                  // 🚨 CHAMA O CALLBACK PARA MUDAR O ESTADO NO PAI 🚨
+                  onTap: () => onItemTapped(index), 
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8), // 🔹 menor padding
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: SizedBox(
                       height: 70,
                       child: Column(
@@ -127,7 +104,7 @@ class _HomeBottomNavBarState extends State<HomeBottomNavBar> {
                               size: 22,
                             ),
                           ),
-                          const SizedBox(height: 4), // 🔹 ligeiramente menor
+                          const SizedBox(height: 4),
                           AnimatedOpacity(
                             opacity: isActive ? 1.0 : 0.0,
                             duration: const Duration(milliseconds: 200),
@@ -135,7 +112,7 @@ class _HomeBottomNavBarState extends State<HomeBottomNavBar> {
                               _labels[index],
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                height: 1.0, // 🔹 estabiliza altura da linha
+                                height: 1.0, 
                                 color: isDark ? Colors.white70 : Colors.black87,
                                 fontWeight: FontWeight.w500,
                               ),
