@@ -1,15 +1,53 @@
 import 'dart:io';
+import 'package:aura_frontend/data/models/corretor_model.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter/services.dart';
 
-// Importe o widget auxiliar _buildTextField (Se estiver em um arquivo separado)
-// Ex: import '../widgets/text_field_helper.dart';
+Widget _buildSectionHeader(ThemeData theme, String title) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4.0),
+    child: Text(
+      title,
+      style: theme.textTheme.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: theme.colorScheme.onSurface,
+      ),
+    ),
+  );
+}
 
-// --- Widget Auxiliar Reutilizável (Placeholder, ajuste o import real) ---
-// Note: Este widget deve estar acessível via import
+Widget _buildProfileInfoTile({
+  required ThemeData theme,
+  required String title,
+  required String value,
+  required Color primaryColor,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: Colors.grey,
+          ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: primaryColor,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -44,7 +82,7 @@ Widget _buildTextField({
             obscureText: obscureText,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
-            enabled: enabled, // Usando o parâmetro enabled
+            enabled: enabled,
             style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
             decoration: InputDecoration(
               hintText: hintText,
@@ -61,63 +99,27 @@ Widget _buildTextField({
   );
 }
 
-// --- WIDGET AUXILIAR: Tile de Informação Estática ---
-Widget _buildProfileInfoTile({
-  required ThemeData theme,
-  required String title,
-  required String value,
-  required Color primaryColor,
-}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: Colors.grey,
-          ),
-        ),
-        Text(
-          value,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: primaryColor,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-// --- FIM DOS WIDGETS AUXILIARES ---
+// **********************************************************************
+//                     CLASSE PRINCIPAL
+// **********************************************************************
 
 class CorretorProfilePage extends StatefulWidget {
-  const CorretorProfilePage({super.key});
+  final CorretorModel corretor;
+
+  const CorretorProfilePage({super.key, required this.corretor});
 
   @override
   State<CorretorProfilePage> createState() => _CorretorProfilePageState();
 }
 
 class _CorretorProfilePageState extends State<CorretorProfilePage> {
-  // --- Atributos do Corretor (USUÁRIO + CORRETOR) ---
-  final TextEditingController _prenomeController =
-      TextEditingController(text: 'João');
-  final TextEditingController _sobrenomeController =
-      TextEditingController(text: 'Silva');
-  final TextEditingController _telefoneController =
-      TextEditingController(text: '(11) 98765-4321');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'joao.silva@aura.com');
-  final TextEditingController _especialidadeController =
-      TextEditingController(text: 'Residencial Luxo');
-  final TextEditingController _regiaoAtuacaoController =
-      TextEditingController(text: 'Itaim Bibi');
-
-  // Dados Estáticos/Críticos (Geralmente não editáveis)
-  final String _cpf = '123.456.789-00';
-  final String _creci = 'CRECI/SP 12345-J';
-  final String _dataNascimento = '01/01/1985';
+  // --- Controladores (Inicializados com dados do widget) ---
+  late TextEditingController _prenomeController;
+  late TextEditingController _sobrenomeController;
+  late TextEditingController _telefoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _especialidadeController;
+  late TextEditingController _regiaoAtuacaoController;
 
   // Imagem de Perfil
   File? _profileImage;
@@ -128,6 +130,32 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
       mask: '(##) #####-####',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicialização a partir do Model
+    _prenomeController = TextEditingController(text: widget.corretor.prenome);
+    _sobrenomeController =
+        TextEditingController(text: widget.corretor.sobrenome);
+    _telefoneController = TextEditingController(text: widget.corretor.telefone);
+    _emailController = TextEditingController(text: widget.corretor.email);
+    _especialidadeController =
+        TextEditingController(text: widget.corretor.especialidade);
+    _regiaoAtuacaoController =
+        TextEditingController(text: widget.corretor.regiaoAtuacao);
+  }
+
+  @override
+  void dispose() {
+    _prenomeController.dispose();
+    _sobrenomeController.dispose();
+    _telefoneController.dispose();
+    _emailController.dispose();
+    _especialidadeController.dispose();
+    _regiaoAtuacaoController.dispose();
+    super.dispose();
+  }
 
   // --- Funções de Perfil ---
   Future<void> _pickProfileImage() async {
@@ -142,8 +170,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
 
   void _saveProfileChanges() {
     // TODO: Implementar a lógica de salvamento (API call)
-
-    // Simulação de feedback de salvamento
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Perfil atualizado com sucesso!')),
     );
@@ -151,6 +177,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
 
   void _logout() {
     // TODO: Implementar a lógica de logout e navegação para LoginPage
+    // Pop até a primeira rota, que deve ser a LoginPage
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -160,12 +187,15 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
-    final iconColor = isDark ? Colors.white : Colors.black;
+
+    // Acesso aos dados críticos
+    final String cpfDisplay = widget.corretor.cpf;
+    final String creciDisplay = widget.corretor.creci;
+    final String dataNascimentoDisplay = widget.corretor.dataNascimento;
 
     return Scaffold(
-      backgroundColor: primaryColor == Colors.black
-          ? Colors.white
-          : Colors.black, // Fundo principal
+      backgroundColor:
+          primaryColor == Colors.black ? Colors.white : Colors.black,
       body: CustomScrollView(
         slivers: [
           CupertinoSliverNavigationBar(
@@ -331,7 +361,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   _buildProfileInfoTile(
                     theme: theme,
                     title: "CPF",
-                    value: _cpf,
+                    value: cpfDisplay,
                     primaryColor: primaryColor,
                   ),
                   const Divider(color: Colors.grey, height: 1),
@@ -340,7 +370,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   _buildProfileInfoTile(
                     theme: theme,
                     title: "CRECI",
-                    value: _creci,
+                    value: creciDisplay,
                     primaryColor: primaryColor,
                   ),
                   const Divider(color: Colors.grey, height: 1),
@@ -349,7 +379,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   _buildProfileInfoTile(
                     theme: theme,
                     title: "Nascimento",
-                    value: _dataNascimento,
+                    value: dataNascimentoDisplay,
                     primaryColor: primaryColor,
                   ),
                   const Divider(color: Colors.grey, height: 1),
@@ -379,20 +409,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // Widget Auxiliar para cabeçalhos de Seção
-  Widget _buildSectionHeader(ThemeData theme, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0),
-      child: Text(
-        title,
-        style: theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: theme.colorScheme.onSurface,
-        ),
       ),
     );
   }

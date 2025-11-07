@@ -1,20 +1,9 @@
-import 'package:aura_frontend/screens/ImovelFilterPage.dart';
-import 'package:aura_frontend/screens/property_page.dart';
-import 'package:aura_frontend/screens/ProprietarioListPage.dart';
-import 'package:aura_frontend/screens/adquirente_list_page.dart';
-import 'package:aura_frontend/screens/adquirente_management.dart';
+import 'package:aura_frontend/features/home/home_page.dart';
+import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart'; // necessário para detectar a plataforma
+import 'package:flutter/foundation.dart';
 import 'package:window_manager/window_manager.dart';
-
-// Telas
-import 'package:aura_frontend/screens/cadastro_page.dart';
-import 'package:aura_frontend/screens/contract_registration_page.dart';
-import 'package:aura_frontend/screens/home.dart';
-import 'package:aura_frontend/screens/login_page.dart';
-import 'package:aura_frontend/screens/propriety_registration_page.dart';
-import 'package:aura_frontend/screens/onboarding.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,7 +83,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const ImovelFilterPage(),
+      home: const HomePage(),
     );
   }
 }

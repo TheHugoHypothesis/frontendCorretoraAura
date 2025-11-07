@@ -2,15 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 
-// ====================================================================
-// WIDGETS AUXILIARES (Definições essenciais)
-// ... (Assumindo que _buildTextField, _buildSectionHeader, _buildPickerSelector estão aqui)
-// ...
-
-// --- Widget Auxiliar Reutilizável: _buildTextField ---
-// (Mantenha a implementação do _buildTextField aqui ou em um arquivo importado)
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -118,7 +111,7 @@ Widget _buildPickerSelector({
 // --- WIDGET AUXILIAR CORRIGIDO: Seletor de Data Estilo Cupertino ---
 Widget _buildDatePickerSelector({
   // CORREÇÃO: Adicione BuildContext como parâmetro obrigatório
-  required BuildContext context, 
+  required BuildContext context,
   required ThemeData theme,
   required String title,
   required DateTime? selectedDate,
@@ -217,10 +210,13 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
   // Controladores e variáveis de estado...
   final TextEditingController _valorController = TextEditingController();
   final TextEditingController _statusController = TextEditingController();
-  final TextEditingController _cpfAdquirenteController = TextEditingController();
-  final TextEditingController _cpfProprietarioController = TextEditingController();
-  final TextEditingController _matriculaImovelController = TextEditingController();
-  String? _tipoContrato = 'Venda'; 
+  final TextEditingController _cpfAdquirenteController =
+      TextEditingController();
+  final TextEditingController _cpfProprietarioController =
+      TextEditingController();
+  final TextEditingController _matriculaImovelController =
+      TextEditingController();
+  String? _tipoContrato = 'Venda';
   final List<String> _tiposContratoDisponiveis = ['Venda', 'Aluguel'];
   DateTime? _dataInicioAluguel;
   DateTime? _dataFimAluguel;
@@ -228,7 +224,6 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
       mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
-
 
   void _handleContractRegistration() {
     // Lógica de envio de dados...
@@ -241,7 +236,7 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
         actions: [
           CupertinoDialogAction(
             child: const Text("OK"),
-            onPressed: () => Navigator.pop(context), 
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
@@ -291,7 +286,8 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                   },
                   children: List<Widget>.generate(
                       _tiposContratoDisponiveis.length, (int index) {
-                    return Center(child: Text(_tiposContratoDisponiveis[index]));
+                    return Center(
+                        child: Text(_tiposContratoDisponiveis[index]));
                   }),
                 ),
               ),
@@ -366,14 +362,15 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                   _buildTextField(
                     controller: _statusController,
                     hintText: "Status (Ex: Ativo, Finalizado, Pendente)",
-                    icon: CupertinoIcons.hourglass, 
+                    icon: CupertinoIcons.hourglass,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 30),
 
-                  _buildSectionHeader(theme, "Identificação das Partes e Imóvel"),
+                  _buildSectionHeader(
+                      theme, "Identificação das Partes e Imóvel"),
                   const SizedBox(height: 16),
                   _buildTextField(
                     controller: _matriculaImovelController,

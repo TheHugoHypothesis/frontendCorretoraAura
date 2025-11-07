@@ -2,15 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// ⚠️ IMPORTANTE: Ajuste este caminho. Assume que o código da AdquirenteDetailPage
-// e os Mocks de Dados estão em um arquivo que exporta essas classes e variáveis.
-import 'adquirente_management.dart';
-// Substitua 'adquirente_management.dart' pelo nome real do arquivo onde você colocou
-// o código anterior (Mocks, AdquirenteDetailPage, e Auxiliares).
-
-// **********************************************************************
-//                       CLASSE PRINCIPAL DE LISTAGEM
-// **********************************************************************
+import 'adquirente_detail_page.dart';
 
 class AdquirenteListPage extends StatefulWidget {
   const AdquirenteListPage({super.key});

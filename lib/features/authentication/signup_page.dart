@@ -6,27 +6,26 @@ import 'package:flutter/services.dart';
 
 // Este é o widget auxiliar do seu login, ele deve ser incluído neste arquivo
 // ou importado se estiver em um arquivo separado para funcionar.
-Widget _buildTextField({
-  required TextEditingController controller,
-  required String hintText,
-  required IconData icon,
-  required ThemeData theme,
-  required Color fieldColor,
-  required Color primaryColor,
-  Widget? suffixIcon,
-  bool obscureText = false,
-  TextInputType keyboardType = TextInputType.text,
-  List<TextInputFormatter>? inputFormatters
-}) {
+Widget _buildTextField(
+    {required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    required ThemeData theme,
+    required Color fieldColor,
+    required Color primaryColor,
+    Widget? suffixIcon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters}) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
       color: fieldColor,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(
-        color: theme.brightness == Brightness.dark 
-              ? Colors.white12 
-              : Colors.grey.shade300,
+        color: theme.brightness == Brightness.dark
+            ? Colors.white12
+            : Colors.grey.shade300,
         width: 1,
       ),
     ),
@@ -45,8 +44,8 @@ Widget _buildTextField({
               hintText: hintText,
               border: InputBorder.none,
               hintStyle: TextStyle(
-                color: theme.brightness == Brightness.dark 
-                    ? Colors.grey.shade500 
+                color: theme.brightness == Brightness.dark
+                    ? Colors.grey.shade500
                     : Colors.grey.shade600,
               ),
             ),
@@ -76,34 +75,36 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   // Atributos de Subclasses
-  final TextEditingController _pontuacaoCreditoController = TextEditingController(); // Adquirente
-  final TextEditingController _creciController = TextEditingController(); // Corretor
-  final TextEditingController _especialidadeController = TextEditingController(); // Corretor
-  final TextEditingController _regiaoAtuacaoController = TextEditingController(); // Corretor
+  final TextEditingController _pontuacaoCreditoController =
+      TextEditingController(); // Adquirente
+  final TextEditingController _creciController =
+      TextEditingController(); // Corretor
+  final TextEditingController _especialidadeController =
+      TextEditingController(); // Corretor
+  final TextEditingController _regiaoAtuacaoController =
+      TextEditingController(); // Corretor
 
   // Formatador
   var phoneMaskFormatter = MaskTextInputFormatter(
       mask: '(##) #####-####', // Máscara (XX) XXXXX-XXXX
       filter: {"#": RegExp(r'[0-9]')},
-      type: MaskAutoCompletionType.lazy
-  );
+      type: MaskAutoCompletionType.lazy);
 
   var cpfMaskFormatter = MaskTextInputFormatter(
       mask: '###.###.###-##', // Máscara XXX.XXX.XXX-XX
       filter: {"#": RegExp(r'[0-9]')},
-      type: MaskAutoCompletionType.lazy
-  );
+      type: MaskAutoCompletionType.lazy);
 
   // Controles de Checkbox
   bool _isProprietario = false;
   bool _isAdquirente = false;
   bool _isCorretor = false;
-  
+
   // Controle de visibilidade de senha
   bool _isPasswordVisible = false;
 
   // Variável para armazenar a data de nascimento
-  DateTime _dataNascimento = DateTime(2000, 1, 1); 
+  DateTime _dataNascimento = DateTime(2000, 1, 1);
 
   void _handleSignUp() {
     // Validação básica para a restrição de integridade total
@@ -112,7 +113,8 @@ class _SignUpPageState extends State<SignUpPage> {
         context: context,
         builder: (context) => CupertinoAlertDialog(
           title: const Text("Tipo de Usuário Ausente"),
-          content: const Text("Você deve se registrar como Proprietário, Adquirente ou Corretor."),
+          content: const Text(
+              "Você deve se registrar como Proprietário, Adquirente ou Corretor."),
           actions: [
             CupertinoDialogAction(
               child: const Text("OK"),
@@ -125,7 +127,7 @@ class _SignUpPageState extends State<SignUpPage> {
     }
 
     // TODO: Implementar a lógica de registro real (API call)
-    
+
     // Simulação de sucesso
     showCupertinoDialog(
       context: context,
@@ -179,7 +181,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark; 
+    final isDark = theme.brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.black : Colors.white;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final secondaryColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
@@ -213,7 +215,8 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -231,14 +234,18 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: _nomeController,
                     hintText: "Nome (Prenome)",
                     icon: CupertinoIcons.person_crop_circle_fill,
-                    theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _sobrenomeController,
                     hintText: "Sobrenome",
                     icon: CupertinoIcons.person_crop_circle,
-                    theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
@@ -246,11 +253,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "CPF", // NOVO HINT
                     icon: CupertinoIcons.number_circle_fill,
                     keyboardType: TextInputType.number,
-                    theme: theme, 
-                    fieldColor: fieldColor, 
+                    theme: theme,
+                    fieldColor: fieldColor,
                     primaryColor: primaryColor,
                     // APLICANDO O FORMATTER DE CPF
-                    inputFormatters: [cpfMaskFormatter], 
+                    inputFormatters: [cpfMaskFormatter],
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
@@ -258,18 +265,19 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "Telefone de Contato", // NOVO HINT
                     icon: CupertinoIcons.phone_fill,
                     keyboardType: TextInputType.phone,
-                    theme: theme, 
-                    fieldColor: fieldColor, 
+                    theme: theme,
+                    fieldColor: fieldColor,
                     primaryColor: primaryColor,
                     // ADICIONANDO O FORMATTER
-                    inputFormatters: [phoneMaskFormatter], 
+                    inputFormatters: [phoneMaskFormatter],
                   ),
                   const SizedBox(height: 12),
                   // Campo de Data de Nascimento (Botão)
                   GestureDetector(
                     onTap: _showDatePicker,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: fieldColor,
                         borderRadius: BorderRadius.circular(14),
@@ -280,7 +288,8 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(CupertinoIcons.calendar, color: primaryColor, size: 20),
+                          Icon(CupertinoIcons.calendar,
+                              color: primaryColor, size: 20),
                           const SizedBox(width: 12),
                           Text(
                             "Data de Nascimento: ${_dataNascimento.toLocal().toString().split(' ')[0]}",
@@ -292,7 +301,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 30),
 
                   // --- Seção de Acesso e Segurança ---
@@ -310,7 +319,9 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "E-mail",
                     icon: CupertinoIcons.mail_solid,
                     keyboardType: TextInputType.emailAddress,
-                    theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
@@ -318,11 +329,13 @@ class _SignUpPageState extends State<SignUpPage> {
                     hintText: "Senha",
                     icon: CupertinoIcons.lock_fill,
                     obscureText: !_isPasswordVisible,
-                    theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible 
-                            ? CupertinoIcons.eye_slash_fill 
+                        _isPasswordVisible
+                            ? CupertinoIcons.eye_slash_fill
                             : CupertinoIcons.eye_fill,
                         color: secondaryColor,
                         size: 20,
@@ -334,7 +347,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       },
                     ),
                   ),
-                  
+
                   const SizedBox(height: 30),
 
                   // --- Seção de Tipos de Usuário (Checkboxes e Campos Dinâmicos) ---
@@ -361,7 +374,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   _buildCheckboxTile(
                     theme: theme,
                     title: "Adquirente",
-                    subtitle: "Deseja comprar ou alugar imóveis (Inquilino/Comprador).",
+                    subtitle:
+                        "Deseja comprar ou alugar imóveis (Inquilino/Comprador).",
                     value: _isAdquirente,
                     onChanged: (val) => setState(() => _isAdquirente = val),
                   ),
@@ -374,7 +388,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       hintText: "Pontuação de Crédito (Ex: 850)",
                       icon: CupertinoIcons.chart_bar_fill,
                       keyboardType: TextInputType.number,
-                      theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -396,7 +412,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       hintText: "Número CRECI (SP)",
                       icon: CupertinoIcons.square_stack_3d_up_fill,
                       keyboardType: TextInputType.text,
-                      theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
                     ),
                     const SizedBox(height: 12),
                     _buildTextField(
@@ -404,7 +422,9 @@ class _SignUpPageState extends State<SignUpPage> {
                       hintText: "Especialidade (Ex: Residencial Luxo)",
                       icon: CupertinoIcons.tag_fill,
                       keyboardType: TextInputType.text,
-                      theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
                     ),
                     const SizedBox(height: 12),
                     _buildTextField(
@@ -412,10 +432,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       hintText: "Região de Atuação (Bairro em SP)",
                       icon: CupertinoIcons.location_solid,
                       keyboardType: TextInputType.text,
-                      theme: theme, fieldColor: fieldColor, primaryColor: primaryColor,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
                     ),
                   ],
-                  
+
                   const SizedBox(height: 40),
 
                   // Botão de Cadastro
@@ -423,13 +445,13 @@ class _SignUpPageState extends State<SignUpPage> {
                     width: double.infinity,
                     height: 56,
                     child: CupertinoButton(
-                      color: primaryColor, 
+                      color: primaryColor,
                       onPressed: _handleSignUp,
                       borderRadius: BorderRadius.circular(14),
                       child: Text(
                         "Criar Conta Aura",
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: backgroundColor, 
+                          color: backgroundColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

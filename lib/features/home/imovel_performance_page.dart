@@ -10,35 +10,17 @@ import 'package:pdf/pdf.dart'; // Para PdfColors
 import 'package:pdf/widgets.dart' as pw; // Para construção do PDF
 import 'package:intl/intl.dart'; // Para DateFormat
 import 'package:open_filex/open_filex.dart'; // Para abrir o arquivo
-import '../data/data_models.dart';
 
-final ImovelMock mockImovelPerformance = ImovelMock(
-  matricula: 'IMV98765',
-  endereco: 'Rua da Performance, 400 - São Paulo',
-  statusOcupacao: 'Disponível',
-  valorVenal: 'R\$ 950.000,00',
-  contratos: [
-    ContratoMock(
-        id: '#0030A',
-        tipo: 'Aluguel',
-        status: 'Finalizado',
-        dataInicio: '01/01/2023',
-        valor: 'R\$ 3.500,00',
-        imovel: 'Rua da Performance, 400'),
-  ],
-);
-
-final List<String> mockStatusHistorico = [
-  "2023-01-01: Alugado (R\$ 3.500,00)",
-  "2022-12-15: Disponível",
-];
+import '../../data/models/contrato_model.dart';
+import '../../data/models/imovel_model.dart';
+import '../../data/mocks/imovel_performance_mock.dart';
 
 // **********************************************************************
 //               CLASSE PRINCIPAL DE PERFORMANCE
 // **********************************************************************
 
 class ImovelPerformancePage extends StatefulWidget {
-  final ImovelMock imovel;
+  final ImovelModel imovel;
   final List<String> historicoStatus;
 
   const ImovelPerformancePage({
@@ -112,7 +94,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
 
   // --- GERAÇÃO REAL DO PDF ---
   Future<void> _gerarRelatorioDePerformance(
-      ImovelMock imovel, List<String> historicoStatus) async {
+      ImovelModel imovel, List<String> historicoStatus) async {
     final pdf = pw.Document();
     final dataAtual = DateTime.now();
     final dataFormatada = DateFormat('dd-MM-yyyy').format(dataAtual);

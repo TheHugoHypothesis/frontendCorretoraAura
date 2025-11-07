@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aura_frontend/screens/home.dart';
+import 'package:aura_frontend/features/home/home_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});

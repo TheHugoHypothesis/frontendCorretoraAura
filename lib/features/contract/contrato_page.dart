@@ -2,8 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-// ⚠️ AJUSTE ESTE CAMINHO CONFORME A ESTRUTURA DO SEU PROJETO
-import 'package:aura_frontend/screens/contract_registration_page.dart';
+import 'package:aura_frontend/features/contract/contract_registration_page.dart';
 
 class ContratoContent extends StatelessWidget {
   const ContratoContent({super.key});
@@ -52,7 +51,8 @@ class ContratoContent extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(CupertinoIcons.add, size: 20, color: Colors.white),
+                      const Icon(CupertinoIcons.add,
+                          size: 20, color: Colors.white),
                       const SizedBox(width: 4),
                       Text(
                         "Criar Contrato",

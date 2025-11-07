@@ -1,10 +1,9 @@
-import 'package:aura_frontend/screens/home.dart';
+import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// Importe a página de cadastro. Ajuste o nome da classe se for diferente de SignUpPage.
-import 'package:aura_frontend/screens/cadastro_page.dart';
+import 'package:aura_frontend/features/authentication/signup_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 Widget _buildTextField({
@@ -82,9 +81,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // Função de simulação de login
   void _handleLogin() {
-    final cpf = _cpfController.text;
     final password = _passwordController.text;
-
     final rawCpf = cpfMaskFormatter.getUnmaskedText();
 
     if (rawCpf.length == 11 && password.isNotEmpty) {

@@ -1,38 +1,12 @@
 import 'dart:ui';
-import 'package:aura_frontend/screens/ImovelPerformancePage.dart';
+import 'package:aura_frontend/features/home/imovel_performance_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../data/data_models.dart';
 
-// ⚠️ Importar a página de destino (Ajuste o caminho real)// Ajuste o caminho do import acima.
+import '../../data/models/imovel_model.dart';
+import '../../data/models/contrato_model.dart';
 
-// **********************************************************************
-//                 MOCKS MÍNIMOS PARA FUNCIONALIDADE
-// **********************************************************************
-
-// Mock de Exemplo de Dados (Deve ser consistente com o que PropertyPage está mostrando)
-final ImovelMock mockImovelPerformance = ImovelMock(
-  matricula: 'IMV98765',
-  endereco:
-      'Rua da Performance, 400 - Dubai', // Endereço mockado para o exemplo
-  statusOcupacao: 'Disponível',
-  valorVenal: 'R\$ 950.000,00',
-  contratos: const [
-    ContratoMock(
-        id: '#0030A',
-        tipo: 'Aluguel',
-        status: 'Finalizado',
-        dataInicio: '01/01/2023',
-        valor: 'R\$ 3.500,00',
-        imovel: 'Jumeirah Village'),
-  ],
-);
-
-final List<String> mockStatusHistorico = [
-  "2023-01-01: Alugado (R\$ 3.500,00)",
-  "2022-12-15: Disponível",
-  "2020-05-10: Vendido (R\$ 750.000,00)",
-];
+import '../../data/mocks/imovel_performance_mock.dart';
 
 // **********************************************************************
 //                 FIM DOS MOCKS

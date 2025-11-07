@@ -1,5 +1,4 @@
-import 'package:aura_frontend/screens/MapLocationPicker.dart';
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:aura_frontend/features/imovel_registration/map_location_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,8 @@ import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'dart:io'; // Para o tipo File
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
+
+import 'package:aura_frontend/data/models/selected_location_model.dart';
 
 // --- Widget Auxiliar Reutilizável (Importado de outros arquivos) ---
 // Note: Você deve garantir que este widget esteja acessível por import ou

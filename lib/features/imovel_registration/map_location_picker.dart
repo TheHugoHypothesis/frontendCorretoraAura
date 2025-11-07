@@ -2,46 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-// Adiciona o import necessário para o AttributionWidget, se necessário (depende da versão do flutter_map)
-// --- Widgets e Classes de Resultado (Mantidos) ---
-class SelectedLocation {
-  final LatLng coordinates;
-  final String address;
-  final String cep;
-  final String logradouro;
-  final String cidade;
-  final String bairro;
-
-  SelectedLocation({
-    required this.coordinates,
-    required this.address,
-    required this.cep,
-    required this.logradouro,
-    required this.cidade,
-    required this.bairro,
-  });
-}
-
-// Classe de Fallback/Mapeamento para Placemark (Simplificada)
-class NominatimResult {
-  final String road;
-  final String suburb;
-  final String city;
-  final String postcode;
-
-  NominatimResult({
-    this.road = 'Logradouro não disponível',
-    this.suburb = 'Bairro não disponível',
-    this.city = 'Cidade não disponível',
-    this.postcode = 'N/A',
-  });
-}
+// Importa os arquivos separados
+import '../../data/services/geocoding_service.dart';
+import '../../data/models/selected_location_model.dart';
 
 class MapLocationPicker extends StatefulWidget {
-// ... (código MapLocationPicker) ...
   final LatLng initialCenter;
 
   const MapLocationPicker({
@@ -54,11 +20,12 @@ class MapLocationPicker extends StatefulWidget {
 }
 
 class _MapLocationPickerState extends State<MapLocationPicker> {
+  // 1. Instancia o serviço
+  final GeocodingService _geocodingService = GeocodingService();
+
   late LatLng _currentLocation;
   String _currentAddress = "Arraste o mapa para selecionar a localização...";
   bool _isLoadingAddress = false;
-
-  _MapLocationPickerState();
 
   @override
   void initState() {
@@ -67,39 +34,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     _geocodeLocation(_currentLocation);
   }
 
-  // NOVO MÉTODO: Geocodificação usando API Nominatim (HTTP)
-  Future<NominatimResult> _geocodeWithNominatim(LatLng coordinates) async {
-    final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&zoom=18&addressdetails=1');
-
-    try {
-      final response = await http.get(url, headers: {
-        // OBRIGATÓRIO: User-Agent para a política OSM
-        'User-Agent': 'AuraImobiliariaApp/1.0 (contact: seu-email@exemplo.com)'
-      });
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final address = data['address'] ?? {};
-
-        return NominatimResult(
-          road: address['road'] ??
-              address['footway'] ??
-              address['pedestrian'] ??
-              '',
-          suburb: address['suburb'] ?? address['city_district'] ?? '',
-          city: address['city'] ?? address['town'] ?? address['village'] ?? '',
-          postcode: address['postcode'] ?? 'N/A',
-        );
-      }
-    } catch (e) {
-      print("Erro HTTP/JSON na geocodificação: $e");
-    }
-    // Retorna fallback em caso de falha de rede ou HTTP não-200
-    return NominatimResult();
-  }
-
-  // Função para converter LatLng em um endereço legível (USANDO NOMINATIM)
+  // 2. A lógica da UI chama o serviço
   Future<void> _geocodeLocation(LatLng coordinates) async {
     setState(() {
       _isLoadingAddress = true;
@@ -107,11 +42,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     });
 
     try {
-      final NominatimResult place = await _geocodeWithNominatim(coordinates);
+      // Chama o serviço externo
+      final place = await _geocodingService.geocodeWithNominatim(coordinates);
 
       if (place.road.isNotEmpty || place.city.isNotEmpty) {
         setState(() {
-          // Constrói um endereço legível para exibição no painel
           _currentAddress = [
             place.road,
             place.suburb,
@@ -140,15 +75,14 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     }
   }
 
-  // Função chamada ao confirmar a seleção (USANDO NOMINATIM)
+  // 3. A lógica de seleção também chama o serviço
   void _selectLocation() async {
-    // Apenas garante que a última busca foi concluída
     if (_isLoadingAddress) return;
 
-    // Obtenção final dos detalhes
-    final NominatimResult place = await _geocodeWithNominatim(_currentLocation);
+    final place =
+        await _geocodingService.geocodeWithNominatim(_currentLocation);
 
-    // Cria o objeto de resultado
+    // Usa o Modelo de Dados 'SelectedLocation' para retornar
     SelectedLocation result = SelectedLocation(
       coordinates: _currentLocation,
       address: _currentAddress,
@@ -158,7 +92,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       bairro: place.suburb,
     );
 
-    // Retorna o resultado
     if (mounted) {
       Navigator.pop(context, result);
     }
@@ -172,6 +105,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
     return Scaffold(
       appBar: AppBar(
+        // (Layout da AppBar mantido)
         backgroundColor: isDark ? Colors.black : Colors.white,
         elevation: 0,
         leading: CupertinoButton(
@@ -199,7 +133,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       ),
       body: Stack(
         children: [
-          // 1. Mapa Interativo (OpenStreetMap)
+          // 1. Mapa Interativo (FlutterMap)
           FlutterMap(
             options: MapOptions(
               initialCenter: _currentLocation,
@@ -220,24 +154,25 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.aura_imobiliaria',
               ),
-
-              // Marcador de Centro (Fixo no centro da tela)
-              Center(
-                child: Icon(
-                  CupertinoIcons.location_solid,
-                  color: primaryColor,
-                  size: 40,
-                ),
-              ),
             ],
           ),
 
-          // 2. Painel Inferior de Endereço (Estilo Apple Like)
+          // Marcador Central
+          Center(
+            child: Icon(
+              CupertinoIcons.location_solid,
+              color: primaryColor,
+              size: 40,
+            ),
+          ),
+
+          // 2. Painel Inferior de Endereço
           Positioned(
             bottom: 20,
             left: 20,
             right: 20,
             child: Container(
+              // (Layout do painel mantido)
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isDark
