@@ -1,3 +1,4 @@
+import 'package:aura_frontend/screens/ImovelFilterPage.dart';
 import 'package:aura_frontend/screens/property_page.dart';
 import 'package:aura_frontend/screens/ProprietarioListPage.dart';
 import 'package:aura_frontend/screens/adquirente_list_page.dart';
@@ -93,7 +94,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const HomePage(),
+      home: const ImovelFilterPage(),
     );
   }
 }
