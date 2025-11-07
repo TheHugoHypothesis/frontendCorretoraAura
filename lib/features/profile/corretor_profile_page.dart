@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/mocks/especialidades_mock.dart';
+import '../../data/mocks/bairros_atuacao_mock.dart';
+
 Widget _buildSectionHeader(ThemeData theme, String title) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 4.0),
@@ -99,10 +102,6 @@ Widget _buildTextField({
   );
 }
 
-// **********************************************************************
-//                     CLASSE PRINCIPAL
-// **********************************************************************
-
 class CorretorProfilePage extends StatefulWidget {
   final CorretorModel corretor;
 
@@ -118,8 +117,9 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
   late TextEditingController _sobrenomeController;
   late TextEditingController _telefoneController;
   late TextEditingController _emailController;
-  late TextEditingController _especialidadeController;
-  late TextEditingController _regiaoAtuacaoController;
+
+  late String _especialidadeSelecionada;
+  late String _regiaoAtuacaoSelecionada;
 
   // Imagem de Perfil
   File? _profileImage;
@@ -140,10 +140,9 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
         TextEditingController(text: widget.corretor.sobrenome);
     _telefoneController = TextEditingController(text: widget.corretor.telefone);
     _emailController = TextEditingController(text: widget.corretor.email);
-    _especialidadeController =
-        TextEditingController(text: widget.corretor.especialidade);
-    _regiaoAtuacaoController =
-        TextEditingController(text: widget.corretor.regiaoAtuacao);
+
+    _especialidadeSelecionada = widget.corretor.especialidade;
+    _regiaoAtuacaoSelecionada = widget.corretor.regiaoAtuacao;
   }
 
   @override
@@ -152,8 +151,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     _sobrenomeController.dispose();
     _telefoneController.dispose();
     _emailController.dispose();
-    _especialidadeController.dispose();
-    _regiaoAtuacaoController.dispose();
     super.dispose();
   }
 
@@ -179,6 +176,89 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     // TODO: Implementar a lógica de logout e navegação para LoginPage
     // Pop até a primeira rota, que deve ser a LoginPage
     Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _showPicker(
+      List<String> items, String currentValue, Function(String) onSelected) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 250,
+        padding: const EdgeInsets.only(top: 6.0),
+        margin:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: SafeArea(
+          top: false,
+          child: CupertinoPicker(
+            magnification: 1.22,
+            squeeze: 1.2,
+            useMagnifier: true,
+            itemExtent: 32.0,
+            // Inicializa o picker na opção selecionada
+            scrollController: FixedExtentScrollController(
+              initialItem: items.indexOf(currentValue),
+            ),
+            onSelectedItemChanged: (int index) {
+              onSelected(items[index]);
+            },
+            children: List<Widget>.generate(items.length, (int index) {
+              return Center(child: Text(items[index]));
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectorTile({
+    required ThemeData theme,
+    required String title,
+    required String selectedValue,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final primaryColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+    final fieldColor = theme.brightness == Brightness.dark
+        ? Colors.white10
+        : Colors.grey.shade100;
+    final accentColor = CupertinoColors.systemGrey;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: fieldColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: accentColor, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
+              ),
+            ),
+
+            // Valor Selecionado
+            Text(
+              selectedValue,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: primaryColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(CupertinoIcons.chevron_right, color: accentColor, size: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -333,22 +413,30 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   _buildSectionHeader(theme, "Atuação Profissional"),
                   const SizedBox(height: 16),
 
-                  _buildTextField(
-                    controller: _especialidadeController,
-                    hintText: "Especialidade",
-                    icon: CupertinoIcons.tag_fill,
+                  _buildSelectorTile(
                     theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
+                    title: "Especialidade",
+                    selectedValue: _especialidadeSelecionada,
+                    icon: CupertinoIcons.tag_fill,
+                    onTap: () => _showPicker(
+                        especialidades,
+                        _especialidadeSelecionada,
+                        (newVal) =>
+                            setState(() => _especialidadeSelecionada = newVal)),
                   ),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _regiaoAtuacaoController,
-                    hintText: "Região de Atuação (Bairro)",
-                    icon: CupertinoIcons.location_solid,
+
+                  // 2. SELETOR DE REGIÃO DE ATUAÇÃO
+                  _buildSelectorTile(
                     theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
+                    title: "Região de Atuação",
+                    selectedValue: _regiaoAtuacaoSelecionada,
+                    icon: CupertinoIcons.location_solid,
+                    onTap: () => _showPicker(
+                        bairrosAtuacao,
+                        _regiaoAtuacaoSelecionada,
+                        (newVal) =>
+                            setState(() => _regiaoAtuacaoSelecionada = newVal)),
                   ),
 
                   const SizedBox(height: 30),
