@@ -2,16 +2,27 @@ import 'package:aura_frontend/screens/corretor_profile_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:aura_frontend/screens/property_page.dart';
+import 'package:aura_frontend/screens/propriety_registration_page.dart';
 import '../widgets/bottom_nav.dart';
 import 'contrato_page.dart';
 import 'pagamentos_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-
+  
   @override
   State<HomePage> createState() => _HomePageState();
 }
+
+  void _navigateToPropertyRegistration(BuildContext context) {
+    // Usa Navigator.push para ir para a nova tela com animação iOS (CupertinoPageRoute)
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => const PropertyRegistrationPage(),
+      ),
+    );
+  }
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
@@ -32,6 +43,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
+    
 
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
@@ -53,6 +67,8 @@ class _HomePageState extends State<HomePage> {
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 
+
+
   void _showNotificationsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -71,6 +87,8 @@ class HomeScreenContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final primaryColor = theme.primaryColor;
 
     return SafeArea(
       bottom: false,
@@ -131,6 +149,13 @@ class HomeScreenContent extends StatelessWidget {
                     icon: const Icon(CupertinoIcons.bell, size: 20),
                   ),
                 ),
+              
+              
+
+              
+              
+              
+              
               ],
             ),
           ),
@@ -163,6 +188,11 @@ class HomeScreenContent extends StatelessWidget {
                             ),
                           ),
                         ),
+                      
+                      
+                      
+                      
+                      
                       ],
                     ),
                   ),
@@ -178,6 +208,34 @@ class HomeScreenContent extends StatelessWidget {
                     icon: const Icon(CupertinoIcons.slider_horizontal_3),
                   ),
                 ),
+
+                const SizedBox(width: 12),
+                
+                CupertinoButton(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                  onPressed: () => _navigateToPropertyRegistration(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(CupertinoIcons.add, size: 20, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Adicionar Imóvel",
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              
+              
+              
               ],
             ),
           ),
