@@ -1,38 +1,42 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart'; // necessário para detectar a plataforma
+import 'package:window_manager/window_manager.dart';
+
+// Telas
 import 'package:aura_frontend/screens/cadastro_page.dart';
 import 'package:aura_frontend/screens/contract_registration_page.dart';
 import 'package:aura_frontend/screens/home.dart';
 import 'package:aura_frontend/screens/login_page.dart';
 import 'package:aura_frontend/screens/propriety_registration_page.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_frontend/screens/onboarding.dart';
-import 'package:window_manager/window_manager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializa o gerenciador de janela
-  await windowManager.ensureInitialized();
-  await windowManager.setResizable(true);
-
-  // Define opções de tamanho e posição da janela
-  const windowOptions = WindowOptions(
-    size: Size(450, 844), // tamanho padrão tipo celular
-    center: true,
-    backgroundColor: Colors.transparent,
-    title: 'Aura Corretora Imobiliária',
-  );
-
-  // Aplica as opções
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-    await windowManager.setSize(const Size(450, 844));
-    await windowManager.center();
-
-    // Evita redimensionar (opcional)
+  // ⚙️ Inicializa o window_manager apenas se for desktop
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.windows)) {
+    await windowManager.ensureInitialized();
     await windowManager.setResizable(true);
-  });
+
+    const windowOptions = WindowOptions(
+      size: Size(450, 844), // tamanho tipo celular
+      center: true,
+      backgroundColor: Colors.transparent,
+      title: 'Aura Corretora Imobiliária',
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+      await windowManager.setSize(const Size(450, 844));
+      await windowManager.center();
+      await windowManager.setResizable(true);
+    });
+  }
 
   runApp(const MyApp());
 }
