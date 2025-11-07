@@ -1,3 +1,4 @@
+import 'package:aura_frontend/screens/ImovelPerformancePage.dart';
 import 'package:aura_frontend/screens/corretor_profile_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,20 +10,10 @@ import 'pagamentos_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
-
-  void _navigateToPropertyRegistration(BuildContext context) {
-    // Usa Navigator.push para ir para a nova tela com animação iOS (CupertinoPageRoute)
-    Navigator.push(
-      context,
-      CupertinoPageRoute(
-        builder: (context) => const PropertyRegistrationPage(),
-      ),
-    );
-  }
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
@@ -45,8 +36,6 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
 
-    
-
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
       body: IndexedStack(
@@ -67,8 +56,6 @@ class _HomePageState extends State<HomePage> {
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 
-
-
   void _showNotificationsModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -80,6 +67,16 @@ class HomeScreenContent extends StatelessWidget {
       builder: (context) {
         return const NotificationModalContent();
       },
+    );
+  }
+
+  void _navigateToPropertyRegistration(BuildContext context) {
+    // Usa Navigator.push para ir para a nova tela com animação iOS (CupertinoPageRoute)
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => const PropertyRegistrationPage(),
+      ),
     );
   }
 
@@ -149,13 +146,6 @@ class HomeScreenContent extends StatelessWidget {
                     icon: const Icon(CupertinoIcons.bell, size: 20),
                   ),
                 ),
-              
-              
-
-              
-              
-              
-              
               ],
             ),
           ),
@@ -188,11 +178,6 @@ class HomeScreenContent extends StatelessWidget {
                             ),
                           ),
                         ),
-                      
-                      
-                      
-                      
-                      
                       ],
                     ),
                   ),
@@ -208,9 +193,7 @@ class HomeScreenContent extends StatelessWidget {
                     icon: const Icon(CupertinoIcons.slider_horizontal_3),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-                
                 CupertinoButton(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -220,7 +203,8 @@ class HomeScreenContent extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(CupertinoIcons.add, size: 20, color: Colors.white),
+                      const Icon(CupertinoIcons.add,
+                          size: 20, color: Colors.white),
                       const SizedBox(width: 4),
                       Text(
                         "Adicionar Imóvel",
@@ -232,10 +216,6 @@ class HomeScreenContent extends StatelessWidget {
                     ],
                   ),
                 ),
-
-              
-              
-              
               ],
             ),
           ),
@@ -342,6 +322,35 @@ class PropertyCard extends StatelessWidget {
     );
   }
 }
+
+class ImovelMock {
+  final String endereco;
+  final String matricula;
+  final String statusOcupacao;
+  final String valorVenal;
+  final List<dynamic> contratos;
+
+  const ImovelMock({
+    required this.endereco,
+    required this.matricula,
+    required this.statusOcupacao,
+    required this.valorVenal,
+    required this.contratos,
+  });
+}
+
+// MOCK DE EXEMPLO (Você deve usar o seu mock completo)
+const ImovelMock mockImovelPerformance = ImovelMock(
+  endereco: 'Rua da Performance, 400 - SP',
+  matricula: 'IMV98765',
+  statusOcupacao: 'Disponível',
+  valorVenal: 'R\$ 950.000,00',
+  contratos: [],
+);
+final List<String> mockStatusHistorico = [
+  "2023-01-01: Alugado",
+  "2022-12-15: Disponível"
+];
 
 // -------------------------------------------------------------------------------------------------------
 // 💡 Ação Necessária do Usuário:

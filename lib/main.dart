@@ -93,7 +93,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const ProprietarioListPage(),
+      home: const HomePage(),
     );
   }
 }

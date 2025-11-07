@@ -99,7 +99,7 @@ class _PagamentoContentState extends State<PagamentoContent> {
               ],
             ),
           ),
-          
+
           // 🔹 BODY
           Expanded(
             child: Padding(
@@ -132,7 +132,8 @@ class _PagamentoContentState extends State<PagamentoContent> {
                                 final t = transacoesFiltradas[index];
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
-                                  child: _buildCardTransacao(t, formato, isDark),
+                                  child:
+                                      _buildCardTransacao(t, formato, isDark),
                                 );
                               },
                             ),

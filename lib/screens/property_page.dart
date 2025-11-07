@@ -1,15 +1,66 @@
 import 'dart:ui';
+import 'package:aura_frontend/screens/ImovelPerformancePage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../data/data_models.dart';
+
+// ⚠️ Importar a página de destino (Ajuste o caminho real)// Ajuste o caminho do import acima.
+
+// **********************************************************************
+//                 MOCKS MÍNIMOS PARA FUNCIONALIDADE
+// **********************************************************************
+
+// Mock de Exemplo de Dados (Deve ser consistente com o que PropertyPage está mostrando)
+final ImovelMock mockImovelPerformance = ImovelMock(
+  matricula: 'IMV98765',
+  endereco:
+      'Rua da Performance, 400 - Dubai', // Endereço mockado para o exemplo
+  statusOcupacao: 'Disponível',
+  valorVenal: 'R\$ 950.000,00',
+  contratos: const [
+    ContratoMock(
+        id: '#0030A',
+        tipo: 'Aluguel',
+        status: 'Finalizado',
+        dataInicio: '01/01/2023',
+        valor: 'R\$ 3.500,00',
+        imovel: 'Jumeirah Village'),
+  ],
+);
+
+final List<String> mockStatusHistorico = [
+  "2023-01-01: Alugado (R\$ 3.500,00)",
+  "2022-12-15: Disponível",
+  "2020-05-10: Vendido (R\$ 750.000,00)",
+];
+
+// **********************************************************************
+//                 FIM DOS MOCKS
+// **********************************************************************
 
 class PropertyPage extends StatelessWidget {
   const PropertyPage({super.key, required this.image});
 
   final String image;
 
+  // NOVO: Função de Navegação para a Página de Performance
+  void _navigateToProperityPerformance(BuildContext context) {
+    // Acessa os mocks e navega
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => ImovelPerformancePage(
+          imovel: mockImovelPerformance,
+          historicoStatus: mockStatusHistorico,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final primaryColor = Colors.black;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,7 +105,7 @@ class PropertyPage extends StatelessWidget {
                         _buildTag(context, Icons.star_rounded, "4.9"),
                         const SizedBox(width: 8),
                         _buildTag(
-                            context, Icons.apartment_rounded, "Apartment"),
+                            context, Icons.apartment_rounded, "Apartamento"),
                       ],
                     ),
                   ),
@@ -67,6 +118,13 @@ class PropertyPage extends StatelessWidget {
               onTap: () => Navigator.pop(context),
             ),
             actions: [
+              // NOVO BOTÃO: Relatório de Performance
+              _circleButton(
+                context,
+                icon: CupertinoIcons.chart_bar_alt_fill,
+                onTap: () => _navigateToProperityPerformance(context),
+              ),
+              const SizedBox(width: 8),
               _circleButton(
                 context,
                 icon: CupertinoIcons.share,
@@ -76,7 +134,7 @@ class PropertyPage extends StatelessWidget {
               _circleButton(
                 context,
                 icon: CupertinoIcons.heart_fill,
-                color: Colors.black,
+                color: primaryColor,
                 iconColor: Colors.white,
                 onTap: () {},
               ),
@@ -100,7 +158,7 @@ class PropertyPage extends StatelessWidget {
                         "Jumeirah Village\nTriangle Dubai",
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: Colors.black,
+                          color: primaryColor,
                           height: 1.2,
                         ),
                       ),
@@ -122,10 +180,10 @@ class PropertyPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    "Property Description",
+                    "Descrição do Imóvel",
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: primaryColor,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -140,17 +198,17 @@ class PropertyPage extends StatelessWidget {
                   TextButton(
                     onPressed: () {},
                     child: Row(
-                      children: const [
+                      children: [
                         Text(
-                          "Show more",
+                          "Mostrar mais",
                           style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.black),
+                              fontWeight: FontWeight.bold, color: primaryColor),
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Icon(
                           CupertinoIcons.arrow_right,
                           size: 20,
-                          color: Colors.black,
+                          color: primaryColor,
                         ),
                       ],
                     ),
@@ -190,16 +248,16 @@ class PropertyPage extends StatelessWidget {
                     "\$250,000",
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: primaryColor,
                     ),
                   ),
                   const Spacer(),
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: const Icon(CupertinoIcons.calendar),
-                    label: const Text("Book Visit"),
+                    label: const Text("Agendar Visita"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 28, vertical: 14),
