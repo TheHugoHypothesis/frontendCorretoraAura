@@ -2,16 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-// Classe que retorna os dados selecionados pelo mapa
+// Adiciona o import necessário para o AttributionWidget, se necessário (depende da versão do flutter_map)
+// --- Widgets e Classes de Resultado (Mantidos) ---
 class SelectedLocation {
   final LatLng coordinates;
   final String address;
   final String cep;
   final String logradouro;
   final String cidade;
-  final String bairro; // Assumindo que você pode extrair o bairro
+  final String bairro;
 
   SelectedLocation({
     required this.coordinates,
@@ -23,7 +25,23 @@ class SelectedLocation {
   });
 }
 
+// Classe de Fallback/Mapeamento para Placemark (Simplificada)
+class NominatimResult {
+  final String road;
+  final String suburb;
+  final String city;
+  final String postcode;
+
+  NominatimResult({
+    this.road = 'Logradouro não disponível',
+    this.suburb = 'Bairro não disponível',
+    this.city = 'Cidade não disponível',
+    this.postcode = 'N/A',
+  });
+}
+
 class MapLocationPicker extends StatefulWidget {
+// ... (código MapLocationPicker) ...
   final LatLng initialCenter;
 
   const MapLocationPicker({
@@ -36,22 +54,52 @@ class MapLocationPicker extends StatefulWidget {
 }
 
 class _MapLocationPickerState extends State<MapLocationPicker> {
-  LatLng _currentLocation;
+  late LatLng _currentLocation;
   String _currentAddress = "Arraste o mapa para selecionar a localização...";
   bool _isLoadingAddress = false;
 
-  _MapLocationPickerState()
-      : _currentLocation = const LatLng(-23.5505, -46.6333); // Padrão SP
+  _MapLocationPickerState();
 
   @override
   void initState() {
     super.initState();
     _currentLocation = widget.initialCenter;
-    // Tenta carregar o endereço inicial
     _geocodeLocation(_currentLocation);
   }
 
-  // Função para converter LatLng em um endereço legível
+  // NOVO MÉTODO: Geocodificação usando API Nominatim (HTTP)
+  Future<NominatimResult> _geocodeWithNominatim(LatLng coordinates) async {
+    final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&zoom=18&addressdetails=1');
+
+    try {
+      final response = await http.get(url, headers: {
+        // OBRIGATÓRIO: User-Agent para a política OSM
+        'User-Agent': 'AuraImobiliariaApp/1.0 (contact: seu-email@exemplo.com)'
+      });
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final address = data['address'] ?? {};
+
+        return NominatimResult(
+          road: address['road'] ??
+              address['footway'] ??
+              address['pedestrian'] ??
+              '',
+          suburb: address['suburb'] ?? address['city_district'] ?? '',
+          city: address['city'] ?? address['town'] ?? address['village'] ?? '',
+          postcode: address['postcode'] ?? 'N/A',
+        );
+      }
+    } catch (e) {
+      print("Erro HTTP/JSON na geocodificação: $e");
+    }
+    // Retorna fallback em caso de falha de rede ou HTTP não-200
+    return NominatimResult();
+  }
+
+  // Função para converter LatLng em um endereço legível (USANDO NOMINATIM)
   Future<void> _geocodeLocation(LatLng coordinates) async {
     setState(() {
       _isLoadingAddress = true;
@@ -59,21 +107,22 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     });
 
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        coordinates.latitude,
-        coordinates.longitude,
-        // language: "pt_BR", // Adicione se o geocoding suportar
-      );
+      final NominatimResult place = await _geocodeWithNominatim(coordinates);
 
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
+      if (place.road.isNotEmpty || place.city.isNotEmpty) {
         setState(() {
+          // Constrói um endereço legível para exibição no painel
           _currentAddress = [
-            place.street,
-            place.subLocality, // Bairro ou Sub-localidade
-            place.locality, // Cidade
-            place.postalCode, // CEP
-          ].where((s) => s != null && s.isNotEmpty).join(', ');
+            place.road,
+            place.suburb,
+            place.city,
+            place.postcode,
+          ]
+              .where((s) =>
+                  s.isNotEmpty &&
+                  s != 'Logradouro não disponível' &&
+                  s != 'N/A')
+              .join(', ');
         });
       } else {
         setState(() {
@@ -82,7 +131,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       }
     } catch (e) {
       setState(() {
-        _currentAddress = "Erro ao buscar endereço: $e";
+        _currentAddress = "Erro fatal ao buscar endereço.";
       });
     } finally {
       setState(() {
@@ -91,58 +140,22 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     }
   }
 
-  // Função chamada ao confirmar a seleção
+  // Função chamada ao confirmar a seleção (USANDO NOMINATIM)
   void _selectLocation() async {
-    // Geocodificação final para retornar todos os detalhes
-    List<Placemark> placemarks = [];
-    Placemark place = Placemark(); // Inicializa com um Placemark vazio
+    // Apenas garante que a última busca foi concluída
+    if (_isLoadingAddress) return;
 
-    // Tenta obter as placemarks. Envolve a chamada principal em um try/catch.
-    try {
-      placemarks = await placemarkFromCoordinates(
-          _currentLocation.latitude, _currentLocation.longitude);
+    // Obtenção final dos detalhes
+    final NominatimResult place = await _geocodeWithNominatim(_currentLocation);
 
-      // Se a lista não estiver vazia, pega o primeiro resultado
-      if (placemarks.isNotEmpty) {
-        place = placemarks.first;
-      }
-    } catch (e) {
-      // Se houver qualquer erro (Null check, rede, etc.), o erro será pego aqui.
-      print("Erro ao obter Placemarks durante a seleção: $e");
-
-      // Criamos um Placemark de fallback com a coordenada atual e dados "Não disponível".
-      place = Placemark(
-        country: 'Não disponível',
-        locality: 'Cidade não disponível',
-        street: 'Logradouro não disponível',
-        postalCode: 'N/A',
-        subLocality: 'Bairro não disponível',
-      );
-    }
-
-    // 1. Opcional: Para evitar a navegação em caso de erro total (se for crítico)
-    /*
-    if (placemarks.isEmpty && place.locality == 'Cidade não disponível') {
-        if (mounted) {
-            Navigator.pop(context, null); // Sai se falhou
-        }
-        return;
-    }
-    */
-
-    // 2. Cria o objeto de resultado, usando o Placemark de fallback em caso de falha.
+    // Cria o objeto de resultado
     SelectedLocation result = SelectedLocation(
       coordinates: _currentLocation,
-      address: _currentAddress, // Usa o endereço exibido no painel
-
-      // Garantimos que todos os campos sejam strings, mesmo que nulos na Placemark
-      cep: place.postalCode ?? 'N/A',
-      logradouro: place.street ?? 'Logradouro não disponível',
-      cidade: place.locality ?? 'Cidade não disponível',
-      // subAdministrativeArea é uma alternativa para Bairro se subLocality for nulo
-      bairro: place.subLocality ??
-          place.subAdministrativeArea ??
-          'Bairro não disponível',
+      address: _currentAddress,
+      cep: place.postcode,
+      logradouro: place.road,
+      cidade: place.city,
+      bairro: place.suburb,
     );
 
     // Retorna o resultado
@@ -191,11 +204,9 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             options: MapOptions(
               initialCenter: _currentLocation,
               initialZoom: 15.0,
-              // Ao mover o mapa, atualiza a localização
               onMapEvent: (event) {
                 if (event is MapEventMoveEnd) {
                   LatLng center = event.camera.center;
-                  // Não faz geocoding em todo movimento, mas no final do movimento
                   if (center.latitude != _currentLocation.latitude ||
                       center.longitude != _currentLocation.longitude) {
                     _currentLocation = center;
@@ -206,7 +217,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             ),
             children: [
               TileLayer(
-                // URL padrão do OpenStreetMap
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.aura_imobiliaria',
               ),
