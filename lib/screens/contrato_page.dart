@@ -2,26 +2,37 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-// Mudei o nome para 'ContratoContent' para refletir que é o CONTEÚDO da aba.
+// ⚠️ AJUSTE ESTE CAMINHO CONFORME A ESTRUTURA DO SEU PROJETO
+import 'package:aura_frontend/screens/contract_registration_page.dart';
+
 class ContratoContent extends StatelessWidget {
   const ContratoContent({super.key});
+
+  // Método auxiliar para navegação
+  void _navigateToContractRegistration(BuildContext context) {
+    // Usa Navigator.push para ir para a nova tela com animação iOS (CupertinoPageRoute)
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => const ContractRegistrationPage(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // O Scaffold e o AppBar originais foram removidos daqui.
-    // O AppBar será adicionado ao topo do conteúdo da aba.
+    final primaryColor = theme.primaryColor;
 
     return SafeArea(
       child: Column(
         children: [
-          // APPBARR/HEADER DA ABA DE CONTRATOS (Adicionado novamente como um Padding/Widget)
+          // APPBARR/HEADER DA ABA DE CONTRATOS (Com Botão)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   "Contratos",
@@ -30,10 +41,33 @@ class ContratoContent extends StatelessWidget {
                     color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
+
+                // BOTÃO "CRIAR CONTRATO"
+                CupertinoButton(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(12),
+                  onPressed: () => _navigateToContractRegistration(context),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(CupertinoIcons.add, size: 20, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        "Criar Contrato",
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          
+
           // CONTEÚDO PRINCIPAL (Body)
           Expanded(
             child: Padding(
@@ -64,10 +98,10 @@ class ContratoContent extends StatelessWidget {
                         lineBarsData: [
                           LineChartBarData(
                             isCurved: true,
-                            color: Colors.black,
+                            color: primaryColor,
                             belowBarData: BarAreaData(
                               show: true,
-                              color: Colors.black.withOpacity(0.1),
+                              color: primaryColor.withOpacity(0.1),
                             ),
                             spots: const [
                               FlSpot(0, 2),
@@ -96,7 +130,7 @@ class ContratoContent extends StatelessWidget {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      _statusCard(context, "Ativos", "12", Colors.black),
+                      _statusCard(context, "Ativos", "12", primaryColor),
                       const SizedBox(width: 12),
                       _statusCard(context, "Vencendo", "3", Colors.amber),
                       const SizedBox(width: 12),
@@ -124,7 +158,7 @@ class ContratoContent extends StatelessWidget {
                           tenant: "Maria Souza",
                           dueDate: "15 Nov 2025",
                           value: "R\$ 2.500,00",
-                          statusColor: Colors.black),
+                          statusColor: primaryColor),
                     ),
                   ),
                 ],
