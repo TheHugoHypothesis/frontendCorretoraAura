@@ -1,3 +1,4 @@
+import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -122,6 +123,29 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _handleMissPassword() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const ForgotPasswordPage(),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 0.08);
+          const end = Offset.zero;
+          final curve = Curves.easeInOutCubic;
+          final tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   // NOVO: Função para navegar para a tela de Cadastro
   void _navigateToSignUp() {
     Navigator.of(context).push(
@@ -218,9 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                 alignment: Alignment.centerRight,
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
-                  onPressed: () {
-                    // TODO: Implementar navegação para a tela de recuperação de senha
-                  },
+                  onPressed: _handleMissPassword,
                   child: Text(
                     "Esqueceu a senha?",
                     style: theme.textTheme.bodyMedium?.copyWith(

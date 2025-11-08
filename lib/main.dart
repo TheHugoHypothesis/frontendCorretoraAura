@@ -1,3 +1,4 @@
+import 'package:aura_frontend/features/authentication/login_page.dart';
 import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const HomePage(),
+      home: const LoginPage(),
     );
   }
 }
