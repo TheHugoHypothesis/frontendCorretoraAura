@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import 'package:aura_frontend/features/contract/contract_registration_page.dart';
+import 'package:aura_frontend/features/contract/contract_details_page.dart';
+import 'package:aura_frontend/data/models/contrato_model.dart';
 
 class ContratoContent extends StatelessWidget {
   const ContratoContent({super.key});
 
-  // Método auxiliar para navegação
   void _navigateToContractRegistration(BuildContext context) {
-    // Usa Navigator.push para ir para a nova tela com animação iOS (CupertinoPageRoute)
     Navigator.push(
       context,
       CupertinoPageRoute(
@@ -27,7 +27,7 @@ class ContratoContent extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          // APPBARR/HEADER DA ABA DE CONTRATOS (Com Botão)
+          // ===== Header com botão =====
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
@@ -40,8 +40,6 @@ class ContratoContent extends StatelessWidget {
                     color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
-
-                // BOTÃO "CRIAR CONTRATO"
                 CupertinoButton(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -68,13 +66,13 @@ class ContratoContent extends StatelessWidget {
             ),
           ),
 
-          // CONTEÚDO PRINCIPAL (Body)
+          // ===== Conteúdo =====
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: ListView(
                 children: [
-                  // ====== Gráfico de Fluxo Financeiro ======
+                  // ===== Gráfico =====
                   Text(
                     "Fluxo Financeiro",
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -120,7 +118,7 @@ class ContratoContent extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ====== Cards de Status ======
+                  // ===== Status =====
                   Text(
                     "Resumo de Contratos",
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -140,7 +138,7 @@ class ContratoContent extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // ====== Lista de Contratos ======
+                  // ===== Lista =====
                   Text(
                     "Contratos Recentes",
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -148,19 +146,29 @@ class ContratoContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ...List.generate(
-                    3,
-                    (index) => Padding(
+
+                  ...List.generate(3, (index) {
+                    final contrato = ContratoModel(
+                      id: "C-2025-00${index + 1}",
+                      tipo: index == 0 ? "Aluguel" : "Venda",
+                      status: "Vigente",
+                      dataInicio: "2025-01-0${index + 1}",
+                      valor: "2500.00",
+                      imovel: "Apartamento ${index + 1}B - Zona Sul",
+                      proprietarioNome: "João Oliveira",
+                      adquirenteNome: "Maria Souza",
+                      corretorNome: "Carlos Mendes",
+                    );
+
+                    return Padding(
                       padding: const EdgeInsets.only(bottom: 14.0),
-                      child: _contractTile(context,
-                          title: "Apartamento ${index + 1}B - Zona Sul",
-                          owner: "João Oliveira",
-                          tenant: "Maria Souza",
-                          dueDate: "15 Nov 2025",
-                          value: "R\$ 2.500,00",
-                          statusColor: primaryColor),
-                    ),
-                  ),
+                      child: _contractTile(
+                        context,
+                        contrato: contrato,
+                        statusColor: primaryColor,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -170,7 +178,7 @@ class ContratoContent extends StatelessWidget {
     );
   }
 
-  // Seus métodos auxiliares aqui (não precisam de Scaffold)
+  // ======= Widgets auxiliares =======
   Widget _statusCard(
       BuildContext context, String label, String value, Color color) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -205,13 +213,9 @@ class ContratoContent extends StatelessWidget {
   }
 
   Widget _contractTile(BuildContext context,
-      {required String title,
-      required String owner,
-      required String tenant,
-      required String dueDate,
-      required String value,
-      required Color statusColor}) {
+      {required ContratoModel contrato, required Color statusColor}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? Colors.white10 : Colors.grey.shade50,
@@ -227,6 +231,14 @@ class ContratoContent extends StatelessWidget {
         ],
       ),
       child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            CupertinoPageRoute(
+              builder: (context) => ContractDetailsPage(contrato: contrato),
+            ),
+          );
+        },
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 46,
@@ -238,15 +250,17 @@ class ContratoContent extends StatelessWidget {
           child: Icon(CupertinoIcons.doc_plaintext, color: statusColor),
         ),
         title: Text(
-          title,
+          contrato.imovel,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Text(
-          "Locador: $owner\nInquilino: $tenant\nVencimento: $dueDate",
+          "Locador: ${contrato.proprietarioNome ?? '—'}\n"
+          "Inquilino: ${contrato.adquirenteNome ?? '—'}\n"
+          "Início: ${contrato.dataInicio}",
           style: const TextStyle(height: 1.4, color: Colors.grey),
         ),
         trailing: Text(
-          value,
+          "R\$ ${contrato.valor}",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
