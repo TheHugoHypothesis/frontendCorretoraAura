@@ -10,10 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:aura_frontend/data/models/selected_location_model.dart';
+import '../../utils/uppercase_text_formatter.dart';
 
-// --- Widget Auxiliar Reutilizável (Importado de outros arquivos) ---
-// Note: Você deve garantir que este widget esteja acessível por import ou
-// defina-o no mesmo arquivo.
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -25,6 +23,8 @@ Widget _buildTextField({
   bool obscureText = false,
   TextInputType keyboardType = TextInputType.text,
   List<TextInputFormatter>? inputFormatters,
+  // 💡 NOVO PARÂMETRO: Sufixo de texto opcional
+  String? suffixText,
 }) {
   // Implementação omitida por brevidade, mas deve ser a mesma das telas anteriores.
   // ... (Sua implementação do _buildTextField) ...
@@ -57,6 +57,14 @@ Widget _buildTextField({
               hintStyle: TextStyle(
                 color: theme.brightness == Brightness.dark
                     ? Colors.grey.shade500
+                    : Colors.grey.shade600,
+              ),
+              // 🚨 APLICAÇÃO DO SUFIXO AQUI:
+              suffixText: suffixText,
+              // Estilo opcional para o sufixo (para deixá-lo discreto, se necessário)
+              suffixStyle: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.brightness == Brightness.dark
+                    ? Colors.grey
                     : Colors.grey.shade600,
               ),
             ),
@@ -144,9 +152,12 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     leftSymbol: 'R\$ ', // Símbolo do Real
     precision: 2, // Duas casas decimais
   );
-  final TextEditingController _numReformasController = TextEditingController();
-  final TextEditingController _numQuartosController = TextEditingController();
+  // final TextEditingController _numReformasController = TextEditingController();
+  // final TextEditingController _numQuartosController = TextEditingController();
   final TextEditingController _metragemController = TextEditingController();
+
+  int _numQuartos = 1;
+  int _numReformas = 0;
 
   // Endereço
   final TextEditingController _cepController = TextEditingController();
@@ -177,6 +188,10 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
       mask: '#####-###',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
+
+  final List<TextInputFormatter> metragemFormatter = [
+    FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
+  ];
 
   // Tipos de Imóveis disponíveis (para o seletor)
   final List<String> _tiposDisponiveis = [
@@ -313,6 +328,86 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     );
   }
 
+  Widget _buildStepperField({
+    required ThemeData theme,
+    required String title,
+    required int value,
+    required ValueChanged<int> onChanged,
+    int minimum = 0,
+    IconData icon = CupertinoIcons.add_circled_solid,
+  }) {
+    final primaryColor = theme.primaryColor;
+    final isDark = theme.brightness == Brightness.dark;
+    final boxColor = isDark ? Colors.white10 : Colors.grey.shade100;
+    final textColor = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: boxColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: isDark ? Colors.white12 : Colors.grey.shade300, width: 1),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2, // Dá um pouco mais de peso ao título
+            child: Row(
+              children: [
+                Icon(icon, color: textColor, size: 20),
+                const SizedBox(width: 8), // Reduzido o espaço
+                Flexible(
+                  // Garante que o texto encolha
+                  child: Text(
+                    title,
+                    style:
+                        theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                    overflow: TextOverflow
+                        .ellipsis, // Opcional: Trunca se for muito longo
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Stepper Control
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Botão de Decremento (-)
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: value > minimum ? () => onChanged(value - 1) : null,
+                child: Icon(
+                  CupertinoIcons.minus_circle_fill,
+                  size: 30,
+                  color: value > minimum ? primaryColor : Colors.grey.shade400,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(
+                  '$value',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold, color: textColor),
+                ),
+              ),
+              // Botão de Incremento (+)
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => onChanged(value + 1),
+                child: Icon(CupertinoIcons.plus_circle_fill,
+                    size: 30, color: primaryColor),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -363,8 +458,11 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
 
                   _buildTextField(
                     controller: _matriculaController,
-                    hintText: "Número de Matrícula (Único)",
+                    hintText: "Número de Matrícula",
                     icon: CupertinoIcons.doc_text_fill,
+                    inputFormatters: [
+                      UpperCaseTextFormatter(),
+                    ],
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
@@ -423,24 +521,30 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                   // Números (Quartos, Metragem, Reformas)
                   Row(
                     children: [
+                      // QUARTOS (USANDO STEPPER)
                       Expanded(
-                        child: _buildTextField(
-                          controller: _numQuartosController,
-                          hintText: "Quartos",
-                          icon: CupertinoIcons.bed_double,
-                          keyboardType: TextInputType.number,
+                        child: _buildStepperField(
                           theme: theme,
-                          fieldColor: fieldColor,
-                          primaryColor: primaryColor,
+                          title: "Quartos",
+                          value: _numQuartos,
+                          onChanged: (newVal) =>
+                              setState(() => _numQuartos = newVal),
+                          minimum: 1, // Mínimo de 1 quarto
+                          icon: CupertinoIcons.bed_double,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildTextField(
                           controller: _metragemController,
-                          hintText: "Metragem (m²)",
+                          hintText: "Metragem",
                           icon: CupertinoIcons.resize,
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9,]')),
+                          ],
+                          suffixText: ' m²',
                           theme: theme,
                           fieldColor: fieldColor,
                           primaryColor: primaryColor,
@@ -449,14 +553,16 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _numReformasController,
-                    hintText: "Nº de Reformas Realizadas",
-                    icon: CupertinoIcons.hammer_fill,
-                    keyboardType: TextInputType.number,
+
+                  // REFORMAS (USANDO STEPPER)
+                  _buildStepperField(
                     theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
+                    title: "Nº de Reformas",
+                    value: _numReformas,
+                    onChanged: (newVal) =>
+                        setState(() => _numReformas = newVal),
+                    minimum: 0,
+                    icon: CupertinoIcons.hammer_fill,
                   ),
 
                   const SizedBox(height: 30),

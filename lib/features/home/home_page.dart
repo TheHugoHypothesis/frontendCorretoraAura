@@ -1,4 +1,5 @@
 import 'package:aura_frontend/data/models/imovel_model.dart';
+import 'package:aura_frontend/features/home/imovel_filter_page.dart';
 import 'package:aura_frontend/features/home/imovel_performance_page.dart';
 import 'package:aura_frontend/features/home/propriety_card.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
@@ -82,6 +83,23 @@ class HomeScreenContent extends StatelessWidget {
         builder: (context) => const PropertyRegistrationPage(),
       ),
     );
+  }
+
+  void _navigateToFilterPage(BuildContext context) async {
+    // Abre a ImovelFilterPage como um modal (default do CupertinoPageRoute)
+    final selectedFilters = await Navigator.push(
+      context,
+      CupertinoPageRoute(
+        fullscreenDialog: true, // Garante que a tela abra como modal
+        builder: (context) => const ImovelFilterPage(),
+      ),
+    );
+
+    // ⚠️ Aqui você receberia e processaria o objeto 'filters'
+    if (selectedFilters != null) {
+      print("Filtros Recebidos: $selectedFilters");
+      // TODO: Aplicar filtros à lista de imóveis na HomeScreenContent
+    }
   }
 
   @override
@@ -193,7 +211,7 @@ class HomeScreenContent extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    onPressed: () {},
+                    onPressed: () => _navigateToFilterPage(context),
                     icon: const Icon(CupertinoIcons.slider_horizontal_3),
                   ),
                 ),

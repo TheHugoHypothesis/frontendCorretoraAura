@@ -13,12 +13,14 @@ class ImovelFilterPage extends StatefulWidget {
 class _ImovelFilterPageState extends State<ImovelFilterPage> {
   // --- Variáveis de Estado (Filtros) ---
   String _finalidade = 'Venda';
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
   final TextEditingController _localizacaoController = TextEditingController();
   final TextEditingController _minAreaController = TextEditingController();
   final TextEditingController _maxAreaController = TextEditingController();
   String _tipoFinalidade = 'Residencial';
-  String? _tipoImovel;
-  final List<String> _tiposImovel = const [
+  String? _propertyType;
+  final List<String> _propertyTypes = const [
     'Apartamento',
     'Casa',
     'Cobertura',
@@ -47,24 +49,38 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
   @override
   void dispose() {
     _localizacaoController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     _minAreaController.dispose();
     _maxAreaController.dispose();
     super.dispose();
   }
 
-  // Ações
   void _aplicarFiltros() {
-    final minArea = int.tryParse(_minAreaController.text);
-    final maxArea = int.tryParse(_maxAreaController.text);
+    final minPrice = _minPriceController.text;
+    final maxPrice = _maxPriceController.text;
+    final minArea = _minAreaController.text;
+    final maxArea = _maxAreaController.text;
 
-    print(
-        'Filtros Aplicados: Finalidade: $_finalidade, Tipo: $_tipoFinalidade, Quartos: $_quartos, Área: ${minArea ?? 'Min'} - ${maxArea ?? 'Max'}');
-    Navigator.pop(context);
+    // Coletar todos os dados e retornar para a Home
+    final filters = {
+      'transaction': _finalidade,
+      'minPrice': minPrice,
+      'maxPrice': maxPrice,
+      'minArea': minArea,
+      'maxArea': maxArea,
+      'purpose': _tipoFinalidade,
+      'type': _propertyType,
+      'bedrooms': _quartos,
+      'hasGarage': _temGaragem,
+      'isFurnished': _eMobiliado,
+      'amenities': _comodidades.keys.where((k) => _comodidades[k]!).toList(),
+    };
+    Navigator.pop(context, filters);
   }
 
-  // --- WIDGETS AUXILIARES E CUSTOMIZADOS ---
+  // --- WIDGETS AUXILIARES E CUSTOMIZADOS (AGORA DENTRO DO ESCOPO) ---
 
-  // Cabeçalho de Seção (Style iOS nativo)
   Widget _buildListHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -79,42 +95,51 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // TextField Simples para Ranges (Metragem, Valor)
-  Widget _buildTextFieldInline({
+  Widget _buildCustomInputField({
     String? placeholder,
     TextEditingController? controller,
     TextInputType keyboardType = TextInputType.number,
+    String? prefixText,
   }) {
-    return CupertinoTextField(
-      controller: controller,
-      placeholder: placeholder,
-      keyboardType: keyboardType,
-      textAlign: TextAlign.center,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : Colors.black;
+    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-            color: CupertinoColors.systemGrey4.resolveFrom(context),
-            width: 0.5),
+        color: fieldColor,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textAlign: TextAlign.center,
+        style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
+        decoration: InputDecoration(
+          hintText: placeholder,
+          border: InputBorder.none,
+          hintStyle: TextStyle(color: Colors.grey.shade600),
+          prefixText: prefixText,
+        ),
       ),
     );
   }
 
-  // Segmented Control (CupertinoSlidingSegmentedControl)
   Widget _buildSegmentedControl<T extends Object>(
     BuildContext context, {
     required T currentValue,
     required Map<T, Widget> map,
     required void Function(T?) onValueChanged,
   }) {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final accentColor = CupertinoColors.systemBlue;
 
     return CupertinoSlidingSegmentedControl<T>(
       groupValue: currentValue,
       onValueChanged: onValueChanged,
       padding: const EdgeInsets.all(4),
-      thumbColor: primaryColor,
+      thumbColor: accentColor,
       backgroundColor: CupertinoColors.systemFill.resolveFrom(context),
       children: map.map((key, value) {
         final isSelected = key == currentValue;
@@ -123,8 +148,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              (value as Text)
-                  .data!, // Remove DefaultTextStyle (causador do sublinhado)
+              (value as Text).data!,
               style: TextStyle(
                 color: isSelected
                     ? CupertinoColors.white
@@ -139,37 +163,37 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // Switch Row (CupertinoListTile com CupertinoSwitch)
   Widget _buildSwitchRow(
     BuildContext context, {
     required String label,
     required bool value,
     required void Function(bool) onChanged,
   }) {
+    final primaryColor = CupertinoTheme.of(context).primaryColor;
     return CupertinoListTile(
       title: Text(label, style: const TextStyle(fontSize: 16)),
       trailing: CupertinoSwitch(
         value: value,
         onChanged: onChanged,
-        activeColor: CupertinoTheme.of(context).primaryColor,
+        activeColor: primaryColor,
       ),
     );
   }
 
-  // Number Stepper (CupertinoListTile com botões customizados)
   Widget _buildNumberStepper({
     required String label,
     required int value,
     required void Function(double) onChanged,
     required int minimum,
   }) {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final primaryColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
     return CupertinoListTile(
       title: Text(label, style: const TextStyle(fontSize: 16)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Botão de Subtração
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: value > minimum
@@ -187,7 +211,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          // Botão de Adição
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => onChanged((value + 1).toDouble()),
@@ -199,9 +222,10 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // Tags/Chips de Comodidades
   Widget _buildAmenitiesWrap() {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    final primaryColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
     final labelColor = CupertinoColors.label.resolveFrom(context);
 
     return Wrap(
@@ -217,8 +241,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 8), // Reduzido o padding
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected
                   ? primaryColor
@@ -234,7 +257,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
             child: Text(
               amenity,
               style: TextStyle(
-                fontSize: 14, // Tamanho da fonte menor
+                fontSize: 14,
                 color: isSelected ? CupertinoColors.white : labelColor,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -245,7 +268,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // Widget de linha para mostrar o valor selecionado (Picker Row)
   Widget _buildPickerRow(
       {required String label,
       required String selectedValue,
@@ -276,7 +298,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // Função para exibir o CupertinoPicker (Modal com a lista de opções)
   void _showPicker(
       List<String> items, void Function(int) onSelectedItemChanged) {
     showCupertinoModalPopup<void>(
@@ -284,9 +305,8 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
       builder: (BuildContext context) => Container(
         height: 250,
         padding: const EdgeInsets.only(top: 6.0),
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
+        margin:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         color: CupertinoColors.systemBackground.resolveFrom(context),
         child: SafeArea(
           top: false,
@@ -307,7 +327,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
 
   // --- CONSTRUÇÃO DAS SEÇÕES ---
 
-  // 1 & 5. Tipo de Transação e Finalidade
   Widget _buildTransactionAndPurposeSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
       header: _buildListHeader('TIPO DE NEGÓCIO E FINALIDADE'),
@@ -321,11 +340,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
               'Venda': Text('Venda'),
               'Locação': Text('Locação'),
             },
-            onValueChanged: (value) {
-              setState(() {
-                _finalidade = value!;
-              });
-            },
+            onValueChanged: (value) => setState(() => _finalidade = value!),
           ),
         ),
         Padding(
@@ -337,18 +352,13 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
               'Residencial': Text('Residencial'),
               'Comercial': Text('Comercial'),
             },
-            onValueChanged: (value) {
-              setState(() {
-                _tipoFinalidade = value!;
-              });
-            },
+            onValueChanged: (value) => setState(() => _tipoFinalidade = value!),
           ),
         ),
       ],
     );
   }
 
-  // 2. Valor (Preço)
   Widget _buildPriceRangeSection(BuildContext context) {
     final unit = _finalidade == 'Venda' ? 'R\$ (Venda)' : 'R\$ (Aluguel/Mês)';
     return CupertinoListSection.insetGrouped(
@@ -359,10 +369,9 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
           child: Row(
             children: [
               Expanded(
-                child: _buildTextFieldInline(
-                  controller:
-                      _minAreaController, // Corrigido para _minPriceController
-                  placeholder: 'Mín. (ex: 100000)',
+                child: _buildCustomInputField(
+                  controller: _minPriceController,
+                  placeholder: 'Mín. (R\$)',
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -372,10 +381,9 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                       color: CupertinoColors.systemGrey.resolveFrom(context))),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextFieldInline(
-                  controller:
-                      _maxAreaController, // Corrigido para _maxPriceController
-                  placeholder: 'Máx. (ex: 500000)',
+                child: _buildCustomInputField(
+                  controller: _maxPriceController,
+                  placeholder: 'Máx. (R\$)',
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -386,7 +394,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // 3. Localização
   Widget _buildLocationSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
       header: _buildListHeader('LOCALIZAÇÃO'),
@@ -412,7 +419,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // 4. Metragem
   Widget _buildAreaRangeSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
       header: _buildListHeader('METRAGEM (ÁREA ÚTIL m²)'),
@@ -422,9 +428,9 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
           child: Row(
             children: [
               Expanded(
-                child: _buildTextFieldInline(
+                child: _buildCustomInputField(
                   controller: _minAreaController,
-                  placeholder: 'Mín. (ex: 50)',
+                  placeholder: 'Mín. (m²)',
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -434,9 +440,9 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                       color: CupertinoColors.systemGrey.resolveFrom(context))),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildTextFieldInline(
+                child: _buildCustomInputField(
                   controller: _maxAreaController,
-                  placeholder: 'Máx. (ex: 150)',
+                  placeholder: 'Máx. (m²)',
                   keyboardType: TextInputType.number,
                 ),
               ),
@@ -447,17 +453,16 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // 6. Tipo de Imóvel
   Widget _buildTypeSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
       header: _buildListHeader('TIPO DE IMÓVEL'),
       children: [
         _buildPickerRow(
           label: 'Tipo',
-          selectedValue: _tipoImovel ?? 'Selecionar',
-          onTap: () => _showPicker(_tiposImovel, (index) {
+          selectedValue: _propertyType ?? 'Selecionar',
+          onTap: () => _showPicker(_propertyTypes, (index) {
             setState(() {
-              _tipoImovel = _tiposImovel[index];
+              _propertyType = _propertyTypes[index];
             });
           }),
         ),
@@ -465,7 +470,6 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // 7, 8, 9. Quartos, Garagem e Mobiliado
   Widget _buildFeaturesAndBedroomsSection(BuildContext context) {
     return CupertinoListSection.insetGrouped(
       header: _buildListHeader('CARACTERÍSTICAS'),
@@ -492,12 +496,10 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     );
   }
 
-  // 10. Comodidades
   Widget _buildAmenitiesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Usamos o cabeçalho de lista, mas sem estar dentro de um ListSection para permitir o Wrap.
         _buildListHeader('COMODIDADES'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -510,14 +512,10 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ CORREÇÃO: Definir o tema Preto e Branco (B&W)
-    // Usamos o MaterialApp no main.dart para definir o tema B&W
-    // Aqui, vamos apenas usar as cores do tema Cupertino
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryColor = isDark ? Colors.white : Colors.black;
-    final backgroundColor = isDark ? Colors.black : Colors.white;
-    final accentColor = Colors.blue; // Cor de Ação padrão do iOS
+    final primaryColor = CupertinoTheme.of(context).primaryColor;
+    final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? Colors.black : Colors.white;
+    final accentColor = CupertinoColors.systemBlue;
 
     return CupertinoPageScaffold(
       backgroundColor: backgroundColor,
@@ -526,7 +524,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
         backgroundColor: backgroundColor,
         border: Border(
             bottom: BorderSide(
-                color: isDark
+                color: isDarkMode
                     ? CupertinoColors.systemGrey5
                     : CupertinoColors.systemGrey4,
                 width: 0.5)),
@@ -534,18 +532,19 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
         leading: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancelar',
-              style: TextStyle(color: accentColor)), // Cor de Ação
+          child: Text('Cancelar', style: TextStyle(color: accentColor)),
         ),
         middle: Text('Filtros de Imóveis',
-            style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+            style: TextStyle(
+                color:
+                    isDarkMode ? CupertinoColors.white : CupertinoColors.black,
+                fontWeight: FontWeight.w600)),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
           onPressed: _aplicarFiltros,
           child: Text('Aplicar',
-              style: TextStyle(
-                  color: accentColor,
-                  fontWeight: FontWeight.bold)), // Cor de Ação
+              style:
+                  TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
         ),
       ),
 
@@ -562,10 +561,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                   _buildAreaRangeSection(context),
                   _buildTypeSection(context),
                   _buildFeaturesAndBedroomsSection(context),
-
-                  // Seção de Comodidades
                   _buildAmenitiesSection(context),
-
                   const SizedBox(height: 80),
                 ],
               ),
@@ -577,7 +573,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                 color: backgroundColor,
                 border: Border(
                     top: BorderSide(
-                        color: isDark
+                        color: isDarkMode
                             ? CupertinoColors.systemGrey5
                             : CupertinoColors.systemGrey4,
                         width: 0.5)),
@@ -585,8 +581,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: SafeArea(
                 top: false,
-                child: CupertinoButton(
-                  color: primaryColor, // Botão Preto/Branco
+                child: CupertinoButton.filled(
                   borderRadius: BorderRadius.circular(12),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   onPressed: _aplicarFiltros,
@@ -595,7 +590,7 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
                       'Aplicar Filtros e Buscar',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: backgroundColor, // Texto Branco/Preto
+                        color: CupertinoColors.white,
                       ),
                     ),
                   ),
