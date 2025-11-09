@@ -1,4 +1,5 @@
 import 'package:aura_frontend/features/authentication/password_reset_page.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -59,9 +60,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     setState(() {}); // Atualiza o botão para verificar se o OTP está completo
   }
 
-  void _verifyOtp() {
+  void _verifyOtp() async {
     if (_enteredOtp.length == _otpLength) {
-      // ⚠️ MOCK: Simulação de sucesso de verificação
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
@@ -72,12 +72,13 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             CupertinoDialogAction(
               child: const Text("OK"),
               onPressed: () {
-                // Navega para a tela de redefinição de senha
-                Navigator.of(context).pushReplacement(
-                  CupertinoPageRoute(
-                    builder: (context) =>
-                        PasswordResetPage(userIdentifier: widget.cpf),
-                  ),
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.resetPassword,
+                  arguments: {
+                    'cpf': widget.cpf,
+                    'otpCode': _enteredOtp,
+                  },
                 );
               },
             ),

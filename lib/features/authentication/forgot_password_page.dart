@@ -1,16 +1,9 @@
 import 'package:aura_frontend/features/authentication/otp_verification_page.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Para TextInputFormatter
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-
-// ⚠️ IMPORTANTE: A classe OtpVerificationPage deve ser importada.
-// import 'otp_verification_page.dart';
-
-// **********************************************************************
-//                 WIDGETS AUXILIARES REQUERIDOS
-// **********************************************************************
-// Estes widgets devem ser definidos ou importados globalmente no seu projeto.
 
 Widget _buildTextField({
   required TextEditingController controller,
@@ -78,16 +71,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       type: MaskAutoCompletionType.lazy);
 
   void _requestOtp() {
-    final cpf = _cpfController.text;
+    final rawCpf = cpfMaskFormatter.getUnmaskedText();
 
-    // ⚠️ MOCK: Simulação de chamada de API para solicitar código
-    if (cpfMaskFormatter.getUnmaskedText().length == 11) {
-      // Navega para a página de verificação de código
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          // ⚠️ Use o nome real da sua classe de verificação de código
-          builder: (context) => const OtpVerificationPage(cpf: 'CPF_MOCKED'),
-        ),
+    if (rawCpf.length == 11) {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.otpVerification,
+        arguments: rawCpf,
       );
     } else {
       showCupertinoDialog(

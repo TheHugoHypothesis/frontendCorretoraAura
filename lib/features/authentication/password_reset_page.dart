@@ -62,9 +62,14 @@ Widget _buildTextField({
 // ----------------------------------------------------------------------
 
 class PasswordResetPage extends StatefulWidget {
-  final String userIdentifier; // CPF ou ID do usuário que teve o OTP verificado
+  final String userCpf;
+  final String otpCode;
 
-  const PasswordResetPage({super.key, required this.userIdentifier});
+  const PasswordResetPage({
+    super.key,
+    required this.userCpf,
+    required this.otpCode,
+  });
 
   @override
   State<PasswordResetPage> createState() => _PasswordResetPageState();
@@ -95,9 +100,14 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
       return;
     }
 
-    // ⚠️ MOCK: Simulação de chamada de API para redefinir senha
+    final resetData = {
+      'cpf': widget.userCpf, // Identificador
+      'otp_code': widget.otpCode, // Chave de segurança
+      'new_password': newPassword, // Nova senha
+    };
 
-    // Sucesso: Retorna para a tela de Login (ou Home, se o fluxo for para lá)
+    print("ENVIANDO DADOS DE RESET PARA O BACKEND: $resetData");
+
     _showAlert(
       "Sucesso!",
       "Sua senha foi redefinida. Você pode fazer login.",

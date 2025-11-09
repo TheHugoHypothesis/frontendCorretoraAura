@@ -1,3 +1,4 @@
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -106,8 +107,7 @@ class _SignUpPageState extends State<SignUpPage> {
   // Variável para armazenar a data de nascimento
   DateTime _dataNascimento = DateTime(2000, 1, 1);
 
-  void _handleSignUp() {
-    // Validação básica para a restrição de integridade total
+  void _handleSignUp() async {
     if (!_isProprietario && !_isAdquirente && !_isCorretor) {
       showCupertinoDialog(
         context: context,
@@ -126,25 +126,48 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // TODO: Implementar a lógica de registro real (API call)
+    print("Simulação: Dados de cadastro prontos para envio.");
 
-    // Simulação de sucesso
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text("Cadastro Concluído"),
-        content: const Text("Seu registro foi enviado com sucesso!"),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text("Ir para o Login"),
-            onPressed: () {
-              Navigator.pop(context); // Fecha o alerta
-              Navigator.pop(context); // Volta para a tela de Login
-            },
+    final accepted =
+        await Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+
+    if (mounted) {
+      if (accepted == true) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Cadastro Concluído"),
+            content: const Text(
+                "Bem-vindo(a)! Sua conta foi criada e os Termos de Privacidade foram aceitos. Clique em 'OK' para ir para o Login."),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, AppRoutes.login, (route) => false);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      } else {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Recusa de Termos"),
+            content: const Text(
+                "O aceite da Política de Privacidade é necessário para finalizar o cadastro e usar o sistema."),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("OK"),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   // Seletor de Data para o estilo Apple/Cupertino
@@ -166,15 +189,6 @@ class _SignUpPageState extends State<SignUpPage> {
           ),
         );
       },
-    );
-  }
-
-  void _navigateToSignUp() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => const SignUpPage(),
-        title: 'Criar Conta', // Título para o back button
-      ),
     );
   }
 
@@ -463,33 +477,6 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSignUpButton(ThemeData theme, Color primaryColor) {
-    return Center(
-      child: CupertinoButton(
-        padding: EdgeInsets.zero,
-        onPressed: _navigateToSignUp,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Não tem conta? ",
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-            ),
-            Text(
-              "Cadastre-se",
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

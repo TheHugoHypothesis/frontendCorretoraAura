@@ -52,6 +52,7 @@ dependencies:
   geocoding: ^4.0.0
   http: ^1.1.0
   flutter_masked_text2: ^0.9.1
+  flutter_markdown: ^0.7.0
 
 dev_dependencies:
   flutter_test:

@@ -1,12 +1,12 @@
 import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/home/home_page.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:aura_frontend/features/authentication/signup_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
+// ⚠️ Assumindo que este widget auxiliar está definido ou acessível.
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -20,6 +20,7 @@ Widget _buildTextField({
       TextInputType.text, // Adicionado para flexibilidade
   List<TextInputFormatter>? inputFormatters, // Adicionado para flexibilidade
 }) {
+  final isDark = theme.brightness == Brightness.dark;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
@@ -86,32 +87,17 @@ class _LoginPageState extends State<LoginPage> {
     final rawCpf = cpfMaskFormatter.getUnmaskedText();
 
     if (rawCpf.length == 11 && password.isNotEmpty) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const HomePage(),
-          transitionsBuilder: (_, animation, secondaryAnimation, child) {
-            const begin = Offset(0.0, 0.08);
-            const end = Offset.zero;
-            final curve = Curves.easeInOutCubic;
-            final tween =
-                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: animation.drive(tween),
-                child: child,
-              ),
-            );
-          },
-        ),
+      Navigator.pushReplacementNamed(
+        context,
+        AppRoutes.home,
       );
     } else {
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
           title: const Text("Erro de Login"),
-          content: const Text("Por favor, preencha todos os campos."),
+          content: const Text(
+              "CPF ou Senha inválidos. Por favor, verifique seus dados."),
           actions: [
             CupertinoDialogAction(
               child: const Text("OK"),
@@ -124,164 +110,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _handleMissPassword() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const ForgotPasswordPage(),
-        transitionsBuilder: (_, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 0.08);
-          const end = Offset.zero;
-          final curve = Curves.easeInOutCubic;
-          final tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            ),
-          );
-        },
-      ),
-    );
+    Navigator.pushNamed(context, AppRoutes.forgotPassword);
   }
 
-  // NOVO: Função para navegar para a tela de Cadastro
   void _navigateToSignUp() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) =>
-            const SignUpPage(), // Usando 'SignUpPage' para consistência
-        title: 'Criar Conta',
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final backgroundColor = isDark ? Colors.black : Colors.white;
-    final primaryColor = isDark ? Colors.white : Colors.black;
-    final secondaryColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
-    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 80),
-
-              // Título "Apple Like"
-              Text(
-                "Aura\nImobiliária",
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: primaryColor,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Text(
-                "Bem-vindo(a) de volta, corretor.",
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: secondaryColor,
-                ),
-              ),
-
-              const SizedBox(height: 60),
-
-              // Campo de E-mail
-              _buildTextField(
-                controller: _cpfController, // Usando o controlador de CPF
-                hintText: "CPF", // Alterado o hint
-                icon: CupertinoIcons.person_fill,
-                theme: theme,
-                fieldColor: fieldColor,
-                primaryColor: primaryColor,
-                keyboardType:
-                    TextInputType.number, // Alterado para teclado numérico
-                inputFormatters: [cpfMaskFormatter], // Aplicando a máscara
-              ),
-              const SizedBox(height: 16),
-
-              // Campo de Senha
-              _buildTextField(
-                controller: _passwordController,
-                hintText: "Senha",
-                icon: CupertinoIcons.lock_fill,
-                obscureText: !_isPasswordVisible,
-                theme: theme,
-                fieldColor: fieldColor,
-                primaryColor: primaryColor,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? CupertinoIcons.eye_slash_fill
-                        : CupertinoIcons.eye_fill,
-                    color: secondaryColor,
-                    size: 20,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Botão Esqueceu a Senha
-              Align(
-                alignment: Alignment.centerRight,
-                child: CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: _handleMissPassword,
-                  child: Text(
-                    "Esqueceu a senha?",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                        color: primaryColor, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-
-              const Spacer(), // Empurra o conteúdo para cima
-
-              // Botão de Login (Principal)
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: CupertinoButton(
-                  color: primaryColor,
-                  onPressed: _handleLogin,
-                  borderRadius: BorderRadius.circular(14), // Borda mais suave
-                  child: Text(
-                    "Entrar",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: backgroundColor, // Cor do texto invertida
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16), // Espaçamento entre botões
-
-              // NOVO: Botão de Cadastro (Secundário, Estilo Texto)
-              _buildSignUpButton(theme, primaryColor),
-
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
+    Navigator.pushNamed(context, AppRoutes.signUp);
   }
 
   // NOVO WIDGET: Botão de Cadastro Secundário
@@ -304,6 +137,157 @@ class _LoginPageState extends State<LoginPage> {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: primaryColor,
                 fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.black : Colors.white;
+    final primaryColor = isDark ? Colors.white : Colors.black;
+    final secondaryColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
+    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Column(
+          // Column é o container principal para empilhar itens verticalmente
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. BOTÃO DE VOLTAR (Navigation Bar Simulada)
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0, top: 10.0),
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () =>
+                    Navigator.pop(context), // Volta para a OnboardingPage
+                child: Icon(CupertinoIcons.back, color: primaryColor),
+              ),
+            ),
+
+            // 2. CONTEÚDO PRINCIPAL (Expanded para ocupar o espaço restante)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Espaçamento ajustado para não ficar muito grudado no topo
+                    const SizedBox(height: 30),
+
+                    // Título "Apple Like"
+                    Text(
+                      "Aura\nImobiliária",
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: primaryColor,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Text(
+                      "Bem-vindo(a) de volta, corretor.",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: secondaryColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: 60),
+
+                    // Campo de CPF
+                    _buildTextField(
+                      controller: _cpfController, // Usando o controlador de CPF
+                      hintText: "CPF", // Alterado o hint
+                      icon: CupertinoIcons.person_fill,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
+                      keyboardType: TextInputType
+                          .number, // Alterado para teclado numérico
+                      inputFormatters: [
+                        cpfMaskFormatter
+                      ], // Aplicando a máscara
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Campo de Senha
+                    _buildTextField(
+                      controller: _passwordController,
+                      hintText: "Senha",
+                      icon: CupertinoIcons.lock_fill,
+                      obscureText: !_isPasswordVisible,
+                      theme: theme,
+                      fieldColor: fieldColor,
+                      primaryColor: primaryColor,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? CupertinoIcons.eye_slash_fill
+                              : CupertinoIcons.eye_fill,
+                          color: secondaryColor,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Botão Esqueceu a Senha
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: _handleMissPassword,
+                        child: Text(
+                          "Esqueceu a senha?",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                              color: primaryColor, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(), // Empurra o conteúdo para cima
+
+                    // Botão de Login (Principal)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: CupertinoButton(
+                        color: primaryColor,
+                        onPressed: _handleLogin,
+                        borderRadius:
+                            BorderRadius.circular(14), // Borda mais suave
+                        child: Text(
+                          "Entrar",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: backgroundColor, // Cor do texto invertida
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16), // Espaçamento entre botões
+
+                    // Botão de Cadastro (Secundário, Estilo Texto)
+                    _buildSignUpButton(theme, primaryColor),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           ],

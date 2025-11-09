@@ -186,6 +186,11 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                   color: isDark ? Colors.white12 : Colors.grey.shade300,
                   width: 0.0),
             ),
+            leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar', style: TextStyle(color: Colors.black)),
+            ),
             trailing: CupertinoButton(
               padding: EdgeInsets.zero,
               onPressed: _clearFilters,

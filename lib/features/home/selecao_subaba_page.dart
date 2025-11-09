@@ -1,6 +1,7 @@
 import 'package:aura_frontend/features/adquirente_management/adquirente_list_page.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
 import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -94,6 +95,7 @@ class SelecaoSubabaPage extends StatelessWidget {
                 width: 0.0,
               ),
             ),
+            automaticallyImplyLeading: false,
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -117,12 +119,10 @@ class SelecaoSubabaPage extends StatelessWidget {
                     subtitle: 'Visualize e edite suas informações pessoais',
                     icon: CupertinoIcons.person_crop_circle_fill,
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        CupertinoPageRoute(
-                          builder: (context) =>
-                              CorretorProfilePage(corretor: corretor),
-                        ),
+                        AppRoutes.perfilCorretor,
+                        arguments: corretor,
                       );
                     },
                   ),
@@ -133,12 +133,8 @@ class SelecaoSubabaPage extends StatelessWidget {
                     subtitle: 'Gerencie e consulte seus proprietários',
                     icon: CupertinoIcons.house_fill,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (context) => const ProprietarioListPage(),
-                        ),
-                      );
+                      Navigator.pushNamed(
+                          context, AppRoutes.gerenciamentoProprietarios);
                     },
                   ),
 
@@ -148,12 +144,8 @@ class SelecaoSubabaPage extends StatelessWidget {
                     subtitle: 'Acompanhe seus clientes interessados',
                     icon: CupertinoIcons.person_2_fill,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                          builder: (context) => const AdquirenteListPage(),
-                        ),
-                      );
+                      Navigator.pushNamed(
+                          context, AppRoutes.gerenciamentoAdquirentes);
                     },
                   ),
 
