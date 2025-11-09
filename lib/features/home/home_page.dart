@@ -120,54 +120,67 @@ class HomeScreenContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white12 : Colors.grey.shade100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.house_fill,
-                    color: Colors.black,
-                    size: 22,
-                  ),
-                ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Sua Localização",
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
+                // Ícone da esquerda
+                Expanded(
+                  flex: 1,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white12 : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.house_fill,
+                        color: Colors.black,
+                        size: 22,
                       ),
                     ),
-                    Row(
-                      children: [
-                        const Icon(CupertinoIcons.location_solid,
-                            color: Colors.black, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Vila Olímpia, SP",
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Icon(CupertinoIcons.chevron_down, size: 14),
-                      ],
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white12 : Colors.grey.shade100,
-                    shape: BoxShape.circle,
                   ),
-                  child: IconButton(
-                    onPressed: () => _showNotificationsModal(context),
-                    icon: const Icon(CupertinoIcons.bell, size: 20),
+                ),
+
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final newWidth = constraints.maxWidth *
+                            1.2; // 3x mais largo (0.5 × 3)
+
+                        return SizedBox(
+                          width: newWidth,
+
+                          height: 50, // mesma altura do header / ícones
+                          child: Image.asset(
+                            'assets/icones/aura4.png',
+                            isAntiAlias: true,
+                            fit: BoxFit.fitWidth,
+                            filterQuality: FilterQuality.high,
+                            cacheWidth: (newWidth * 2).toInt(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                // Ícone da direita (notificações)
+                Expanded(
+                  flex: 1,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white12 : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        onPressed: () => _showNotificationsModal(context),
+                        icon: const Icon(CupertinoIcons.bell, size: 20),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -196,7 +209,7 @@ class HomeScreenContent extends StatelessWidget {
                           child: TextField(
                             style: theme.textTheme.bodyMedium,
                             decoration: const InputDecoration(
-                              hintText: "Search properties...",
+                              hintText: "Busque propriedades...",
                               border: InputBorder.none,
                               hintStyle: TextStyle(color: Colors.grey),
                             ),
