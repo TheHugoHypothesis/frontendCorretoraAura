@@ -22,14 +22,33 @@ class Endpoints {
   static const String adquirentesList = '/adquirentes';
   static const String adquirentesUpdate = '/adquirentes/update';
 
-  // Rotas de Contratos
-  static const String contratosList = '/contratos';
-  static const String contratoRegister = '/contratos/register';
-  static const String contratoGetDetail = '/contratos/';
+  // Rotas de usuario (f)
+  static const String usuarioCadastro = '/usuario/cadastro';
+  static const String usuarioTelefone = '/usuario/telefones';
+  static const String usuarioDeleta = '/usuario/deleta';
+  static const String usuarioPerfisImoveis = '/usuario/perfis-imoveis';
+  static const String usuarioImoveisProprietario =
+      '/usuario/imoveis-proprietario';
 
-  // Rotas de Pagamentos
-  static const String pagamentosList = '/pagamentos';
-  static const String pagamentosRegister = '/pagamentos/register';
+  // Rotas de Pagamentos (f)
+  static const String pagamentosCadastro = '/pagamentos/cadastro';
+  static const String pagamentosStatus = '/pagamentos/status';
+  static const String pagamentosAtualizaStatus = '/pagamentos/atualiza_status';
+  static const String pagamentosExtratoImovel = '/pagamentos/extrato-imovel';
+  static const String pagamentosExtratoAdquirente =
+      '/pagamentos/extrato-adquirente';
+
+  // Rotas de contrato (f)
+  static const String contratoPrazo = '/contratos/prazo';
+  static const String contratoCadastro = '/contratos/cadastro';
+  static const String contratoDeletar = '/contratos/deleta';
+  static const String contratoAlterarStatus = '/contratos/alterar-status';
+  static const String contratoObterPeriodoAluguel =
+      '/contratos/obter-periodo-aluguel';
+  static const String contratoAluguelAtivo = '/contratos/alugueis-ativos';
+  static const String contratoValoresImovel = '/contratos/obter-valores-imovel';
+  static const String contratoMaisAlugados = '/contratos/obter-mais-alugados';
+  static const String contratoPessoasImovel = '/contratos/obter-pessoas-imovel';
 
   static const String auth = '/auth';
 }
