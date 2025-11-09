@@ -1,10 +1,9 @@
-import 'package:aura_frontend/features/authentication/login_page.dart';
-import 'package:aura_frontend/features/home/home_page.dart';
-import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/foundation.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:screen_retriever/screen_retriever.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:aura_frontend/features/authentication/login_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,21 +14,32 @@ Future<void> main() async {
           defaultTargetPlatform == TargetPlatform.macOS ||
           defaultTargetPlatform == TargetPlatform.windows)) {
     await windowManager.ensureInitialized();
-    await windowManager.setResizable(true);
 
-    const windowOptions = WindowOptions(
-      size: Size(450, 844), // tamanho tipo celular
+    // ✅ Obtém tamanho da tela principal
+    final display = await screenRetriever.getPrimaryDisplay();
+    final screenSize = display.size;
+
+    // Define tamanho proporcional (ex: 30% da largura e 80% da altura)
+    final width = screenSize.width * 0.3;
+    final height = screenSize.height * 0.9;
+
+    const title = 'Aura Corretora Imobiliária';
+
+    final windowOptions = WindowOptions(
+      size: Size(width, height),
       center: true,
       backgroundColor: Colors.transparent,
-      title: 'Aura Corretora Imobiliária',
+      title: title,
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
-      await windowManager.setSize(const Size(450, 844));
+      await windowManager.setSize(Size(width, height));
       await windowManager.center();
       await windowManager.setResizable(true);
+      await windowManager.setIcon('assets/icones/icone3.png');
+      await windowManager.setTitleBarStyle(TitleBarStyle.normal);
     });
   }
 
@@ -55,33 +65,7 @@ class MyApp extends StatelessWidget {
           background: Colors.white,
           onBackground: Colors.black87,
         ),
-        textTheme: GoogleFonts.interTextTheme().copyWith(
-          displaySmall: GoogleFonts.inter(
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-          titleLarge: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-          bodyLarge: GoogleFonts.inter(
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-          ),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          ),
-        ),
+        textTheme: GoogleFonts.interTextTheme(),
         scaffoldBackgroundColor: Colors.white,
       ),
       home: const LoginPage(),
