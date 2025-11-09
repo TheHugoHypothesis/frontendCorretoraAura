@@ -2,37 +2,56 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// Este Widget mantém o estado de todos os filtros selecionados pelo usuário.
-class ImovelFilterPage extends StatefulWidget {
-  const ImovelFilterPage({super.key});
+// Página: filter_imovel.dart
+// Descrição: Página Apple-like para seleção de filtros de imóveis.
+// Retorna um Map<String, dynamic> com os filtros selecionados via Navigator.pop(context, filtersMap)
+
+class FilterImovelPage extends StatefulWidget {
+  const FilterImovelPage({super.key});
 
   @override
-  State<ImovelFilterPage> createState() => _ImovelFilterPageState();
+  State<FilterImovelPage> createState() => _FilterImovelPageState();
 }
 
-class _ImovelFilterPageState extends State<ImovelFilterPage> {
-  // --- Variáveis de Estado (Filtros) ---
-  String _finalidade = 'Venda';
-  final TextEditingController _minPriceController = TextEditingController();
-  final TextEditingController _maxPriceController = TextEditingController();
-  final TextEditingController _localizacaoController = TextEditingController();
-  final TextEditingController _minAreaController = TextEditingController();
-  final TextEditingController _maxAreaController = TextEditingController();
-  String _tipoFinalidade = 'Residencial';
-  String? _propertyType;
-  final List<String> _propertyTypes = const [
+class _FilterImovelPageState extends State<FilterImovelPage> {
+  // CONTROLLERS DE ENDEREÇO
+  final TextEditingController _estadoController = TextEditingController();
+  final TextEditingController _cidadeController = TextEditingController();
+  final TextEditingController _bairroController = TextEditingController();
+  final TextEditingController _ruaController = TextEditingController();
+
+  // METRAGEM
+  final TextEditingController _metragemMinController = TextEditingController();
+  final TextEditingController _metragemMaxController = TextEditingController();
+
+  // VALOR (RANGE)
+  RangeValues _valorRange = const RangeValues(100000, 1000000);
+  final double _valorMinLimit = 0;
+  final double _valorMaxLimit = 5000000;
+
+  // TIPO / FINALIDADE
+  String? _tipoSelecionado;
+  String? _finalidadeSelecionada;
+  final List<String> _tiposDisponiveis = [
     'Apartamento',
     'Casa',
     'Cobertura',
     'Kitnet/Conjugado',
-    'Lote/Terreno',
-    'Outros'
+    'Sala Comercial',
+    'Terreno',
+    'Loft'
   ];
-  int _quartos = 1;
-  bool _temGaragem = false;
-  bool _eMobiliado = false;
+  final List<String> _finalidadesDisponiveis = ['Residencial', 'Comercial'];
 
-  final Map<String, bool> _comodidades = {
+  // QUARTOS
+  int _numQuartos = 1;
+
+  // SWITCHES
+  bool _possuiGaragem = false;
+  bool _isMobiliado = false;
+
+  // COMODIDADES
+  Map<String, bool> _comodidades = {
     'Piscina': false,
     'Churrasqueira': false,
     'Salão de Festas': false,
@@ -44,561 +63,653 @@ class _ImovelFilterPageState extends State<ImovelFilterPage> {
     'Ar Condicionado': false,
     'Varanda/Sacada': false,
   };
-  // ------------------------------------
 
-  @override
-  void dispose() {
-    _localizacaoController.dispose();
-    _minPriceController.dispose();
-    _maxPriceController.dispose();
-    _minAreaController.dispose();
-    _maxAreaController.dispose();
-    super.dispose();
-  }
+  // THEME-DEPENDENT COLORS (calculados no build)
 
-  void _aplicarFiltros() {
-    final minPrice = _minPriceController.text;
-    final maxPrice = _maxPriceController.text;
-    final minArea = _minAreaController.text;
-    final maxArea = _maxAreaController.text;
-
-    // Coletar todos os dados e retornar para a Home
-    final filters = {
-      'transaction': _finalidade,
-      'minPrice': minPrice,
-      'maxPrice': maxPrice,
-      'minArea': minArea,
-      'maxArea': maxArea,
-      'purpose': _tipoFinalidade,
-      'type': _propertyType,
-      'bedrooms': _quartos,
-      'hasGarage': _temGaragem,
-      'isFurnished': _eMobiliado,
-      'amenities': _comodidades.keys.where((k) => _comodidades[k]!).toList(),
-    };
-    Navigator.pop(context, filters);
-  }
-
-  // --- WIDGETS AUXILIARES E CUSTOMIZADOS (AGORA DENTRO DO ESCOPO) ---
-
-  Widget _buildListHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: CupertinoColors.systemGrey.resolveFrom(context),
-        ),
-      ),
+  // FUNÇÃO PARA ABRIR PICKER (USADO PARA TIPO / FINALIDADE)
+  void _showCupertinoPicker({
+    required List<String> options,
+    required String title,
+    required Function(String) onSelectedItemChanged,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext builder) {
+        String initialValue = options.first;
+        return Container(
+          height: 300,
+          color: CupertinoColors.white,
+          child: Column(
+            children: [
+              Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 16),
+                height: 40,
+                child: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Pronto',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+              Expanded(
+                child: CupertinoPicker(
+                  magnification: 1.22,
+                  squeeze: 1.2,
+                  useMagnifier: true,
+                  itemExtent: 32.0,
+                  onSelectedItemChanged: (int index) {
+                    initialValue = options[index];
+                    onSelectedItemChanged(initialValue);
+                  },
+                  children: List<Widget>.generate(options.length, (int index) {
+                    return Center(child: Text(options[index]));
+                  }),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildCustomInputField({
-    String? placeholder,
-    TextEditingController? controller,
-    TextInputType keyboardType = TextInputType.number,
-    String? prefixText,
-  }) {
+  // Retorna o Map com filtros selecionados
+  void _applyFilters() {
+    final filters = <String, dynamic>{
+      'valorMin': _valorRange.start.toInt(),
+      'valorMax': _valorRange.end.toInt(),
+      'estado': _estadoController.text.trim(),
+      'cidade': _cidadeController.text.trim(),
+      'bairro': _bairroController.text.trim(),
+      'rua': _ruaController.text.trim(),
+      'metragemMin': _metragemMinController.text.trim().isEmpty
+          ? null
+          : int.tryParse(
+              _metragemMinController.text.replaceAll(RegExp(r'[^0-9]'), '')),
+      'metragemMax': _metragemMaxController.text.trim().isEmpty
+          ? null
+          : int.tryParse(
+              _metragemMaxController.text.replaceAll(RegExp(r'[^0-9]'), '')),
+      'tipo': _tipoSelecionado,
+      'finalidade': _finalidadeSelecionada,
+      'numQuartos': _numQuartos,
+      'possuiGaragem': _possuiGaragem,
+      'mobiliado': _isMobiliado,
+      'comodidades': Map<String, bool>.from(_comodidades),
+    };
+
+    Navigator.of(context).pop(filters);
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _estadoController.clear();
+      _cidadeController.clear();
+      _bairroController.clear();
+      _ruaController.clear();
+      _metragemMinController.clear();
+      _metragemMaxController.clear();
+      _valorRange = const RangeValues(100000, 1000000);
+      _tipoSelecionado = null;
+      _finalidadeSelecionada = null;
+      _numQuartos = 1;
+      _possuiGaragem = false;
+      _isMobiliado = false;
+      _comodidades.updateAll((key, value) => false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.black : Colors.white;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: fieldColor,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        textAlign: TextAlign.center,
-        style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
-        decoration: InputDecoration(
-          hintText: placeholder,
-          border: InputBorder.none,
-          hintStyle: TextStyle(color: Colors.grey.shade600),
-          prefixText: prefixText,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSegmentedControl<T extends Object>(
-    BuildContext context, {
-    required T currentValue,
-    required Map<T, Widget> map,
-    required void Function(T?) onValueChanged,
-  }) {
-    final accentColor = CupertinoColors.systemBlue;
-
-    return CupertinoSlidingSegmentedControl<T>(
-      groupValue: currentValue,
-      onValueChanged: onValueChanged,
-      padding: const EdgeInsets.all(4),
-      thumbColor: accentColor,
-      backgroundColor: CupertinoColors.systemFill.resolveFrom(context),
-      children: map.map((key, value) {
-        final isSelected = key == currentValue;
-        return MapEntry(
-          key,
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              (value as Text).data!,
-              style: TextStyle(
-                color: isSelected
-                    ? CupertinoColors.white
-                    : CupertinoColors.label.resolveFrom(context),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 15,
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          CupertinoSliverNavigationBar(
+            largeTitle: Text(
+              'Filtrar Imóveis',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
               ),
             ),
+            backgroundColor: backgroundColor,
+            border: Border(
+              bottom: BorderSide(
+                  color: isDark ? Colors.white12 : Colors.grey.shade300,
+                  width: 0.0),
+            ),
+            trailing: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: _clearFilters,
+              child: Text('Limpar',
+                  style: TextStyle(
+                      color: primaryColor, fontWeight: FontWeight.w600)),
+            ),
           ),
-        );
-      }),
-    );
-  }
+          SliverToBoxAdapter(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader(theme, 'Valor'),
+                  const SizedBox(height: 12),
 
-  Widget _buildSwitchRow(
-    BuildContext context, {
-    required String label,
-    required bool value,
-    required void Function(bool) onChanged,
-  }) {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
-    return CupertinoListTile(
-      title: Text(label, style: const TextStyle(fontSize: 16)),
-      trailing: CupertinoSwitch(
-        value: value,
-        onChanged: onChanged,
-        activeColor: primaryColor,
-      ),
-    );
-  }
+                  // Range Slider de Valor
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: fieldColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color:
+                              isDark ? Colors.white12 : Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Faixa de preço (R\$)',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: primaryColor,
+                                fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        RangeSlider(
+                          values: _valorRange,
+                          min: _valorMinLimit,
+                          max: _valorMaxLimit,
+                          divisions: 100,
+                          labels: RangeLabels(
+                            'R\$ ${_valorRange.start.toInt()}',
+                            'R\$ ${_valorRange.end.toInt()}',
+                          ),
+                          onChanged: (RangeValues values) {
+                            setState(() => _valorRange = values);
+                          },
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Min: R\$ ${_valorRange.start.toInt()}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? Colors.grey.shade300
+                                        : Colors.grey.shade700)),
+                            Text('Max: R\$ ${_valorRange.end.toInt()}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? Colors.grey.shade300
+                                        : Colors.grey.shade700)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
 
-  Widget _buildNumberStepper({
-    required String label,
-    required int value,
-    required void Function(double) onChanged,
-    required int minimum,
-  }) {
-    final theme = Theme.of(context);
-    final primaryColor =
-        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-    return CupertinoListTile(
-      title: Text(label, style: const TextStyle(fontSize: 16)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: value > minimum
-                ? () => onChanged((value - 1).toDouble())
-                : null,
-            child: Icon(CupertinoIcons.minus_circle_fill,
-                size: 30,
-                color: value > minimum
-                    ? primaryColor
-                    : CupertinoColors.systemGrey),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Text('$value',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          CupertinoButton(
-            padding: EdgeInsets.zero,
-            onPressed: () => onChanged((value + 1).toDouble()),
-            child: Icon(CupertinoIcons.plus_circle_fill,
-                size: 30, color: primaryColor),
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Localização'),
+                  const SizedBox(height: 12),
+
+                  // Estado / Cidade / Bairro / Rua
+                  _buildTextField(
+                    controller: _estadoController,
+                    hintText: 'Estado',
+                    icon: CupertinoIcons.location,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _cidadeController,
+                    hintText: 'Cidade',
+                    icon: CupertinoIcons.building_2_fill,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _bairroController,
+                    hintText: 'Bairro',
+                    icon: CupertinoIcons.placemark_fill,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _ruaController,
+                    hintText: 'Rua',
+                    icon: CupertinoIcons.map_pin_ellipse,
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Metragem (Área útil)'),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _metragemMinController,
+                          hintText: 'Mínimo (m²)',
+                          icon: CupertinoIcons.minus_circle,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          theme: theme,
+                          fieldColor: fieldColor,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _metragemMaxController,
+                          hintText: 'Máximo (m²)',
+                          icon: CupertinoIcons.add_circled,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          theme: theme,
+                          fieldColor: fieldColor,
+                          primaryColor: primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Tipo e Finalidade'),
+                  const SizedBox(height: 12),
+
+                  // Tipo
+                  _buildPickerSelector(
+                    theme: theme,
+                    title: 'Tipo',
+                    value: _tipoSelecionado ?? 'Qualquer tipo',
+                    icon: CupertinoIcons.square_list_fill,
+                    onTap: () {
+                      _showCupertinoPicker(
+                        options: _tiposDisponiveis,
+                        title: 'Tipo de Imóvel',
+                        onSelectedItemChanged: (value) =>
+                            setState(() => _tipoSelecionado = value),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Finalidade
+                  _buildPickerSelector(
+                    theme: theme,
+                    title: 'Finalidade',
+                    value: _finalidadeSelecionada ?? 'Qualquer finalidade',
+                    icon: CupertinoIcons.flag_fill,
+                    onTap: () {
+                      _showCupertinoPicker(
+                        options: _finalidadesDisponiveis,
+                        title: 'Finalidade',
+                        onSelectedItemChanged: (value) =>
+                            setState(() => _finalidadeSelecionada = value),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Quartos'),
+                  const SizedBox(height: 12),
+
+                  _buildStepperField(
+                    theme: theme,
+                    title: 'Número de Quartos',
+                    value: _numQuartos,
+                    onChanged: (newVal) => setState(() => _numQuartos = newVal),
+                    minimum: 0,
+                    icon: CupertinoIcons.bed_double,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Características'),
+                  const SizedBox(height: 12),
+
+                  _buildOptionTile(
+                    theme: theme,
+                    title: 'Possui Garagem',
+                    value: _possuiGaragem,
+                    onChanged: (val) => setState(() => _possuiGaragem = val),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildOptionTile(
+                    theme: theme,
+                    title: 'Mobiliado',
+                    value: _isMobiliado,
+                    onChanged: (val) => setState(() => _isMobiliado = val),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Text('Comodidades',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600, color: primaryColor)),
+                  const SizedBox(height: 12),
+
+                  // Lista de comodidades (switches)
+                  Column(
+                    children: _comodidades.keys.map((key) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildOptionTile(
+                          theme: theme,
+                          title: key,
+                          value: _comodidades[key]!,
+                          onChanged: (val) =>
+                              setState(() => _comodidades[key] = val),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Botões de Ação
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: CupertinoButton(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(14),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(14),
+                                color: fieldColor,
+                              ),
+                              child: Text('Cancelar',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 56,
+                          child: CupertinoButton(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(14),
+                            onPressed: _applyFilters,
+                            child: Text('Aplicar filtros',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                    color: backgroundColor,
+                                    fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAmenitiesWrap() {
-    final theme = Theme.of(context);
-    final primaryColor =
-        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-    final labelColor = CupertinoColors.label.resolveFrom(context);
+  // ==================== WIDGETS AUXILIARES (BASEADOS NO SEU PADRÃO) ====================
 
-    return Wrap(
-      spacing: 8.0,
-      runSpacing: 8.0,
-      children: _comodidades.keys.map((amenity) {
-        final isSelected = _comodidades[amenity]!;
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _comodidades[amenity] = !isSelected;
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? primaryColor
-                  : CupertinoColors.systemBackground.resolveFrom(context),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected
-                    ? primaryColor
-                    : CupertinoColors.systemGrey4.resolveFrom(context),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              amenity,
-              style: TextStyle(
-                fontSize: 14,
-                color: isSelected ? CupertinoColors.white : labelColor,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+  Widget _buildSectionHeader(ThemeData theme, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Text(
+        title,
+        style: theme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
     );
   }
 
-  Widget _buildPickerRow(
-      {required String label,
-      required String selectedValue,
-      required VoidCallback onTap}) {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
-    return CupertinoListTile(
-      title: Text(label, style: const TextStyle(fontSize: 16)),
-      trailing: GestureDetector(
-        onTap: onTap,
+  Widget _buildPickerSelector({
+    required ThemeData theme,
+    required String title,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : Colors.black;
+    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: fieldColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: isDark ? Colors.white12 : Colors.grey.shade300, width: 1),
+        ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              selectedValue,
-              style: TextStyle(
-                  color: selectedValue == 'Selecionar'
-                      ? CupertinoColors.systemGrey.resolveFrom(context)
-                      : primaryColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(width: 4),
-            Icon(CupertinoIcons.chevron_right,
-                size: 16, color: CupertinoColors.systemGrey),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPicker(
-      List<String> items, void Function(int) onSelectedItemChanged) {
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (BuildContext context) => Container(
-        height: 250,
-        padding: const EdgeInsets.only(top: 6.0),
-        margin:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        color: CupertinoColors.systemBackground.resolveFrom(context),
-        child: SafeArea(
-          top: false,
-          child: CupertinoPicker(
-            magnification: 1.22,
-            squeeze: 1.2,
-            useMagnifier: true,
-            itemExtent: 32.0,
-            onSelectedItemChanged: onSelectedItemChanged,
-            children: List<Widget>.generate(items.length, (int index) {
-              return Center(child: Text(items[index]));
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- CONSTRUÇÃO DAS SEÇÕES ---
-
-  Widget _buildTransactionAndPurposeSection(BuildContext context) {
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('TIPO DE NEGÓCIO E FINALIDADE'),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: _buildSegmentedControl<String>(
-            context,
-            currentValue: _finalidade,
-            map: const <String, Widget>{
-              'Venda': Text('Venda'),
-              'Locação': Text('Locação'),
-            },
-            onValueChanged: (value) => setState(() => _finalidade = value!),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: _buildSegmentedControl<String>(
-            context,
-            currentValue: _tipoFinalidade,
-            map: const <String, Widget>{
-              'Residencial': Text('Residencial'),
-              'Comercial': Text('Comercial'),
-            },
-            onValueChanged: (value) => setState(() => _tipoFinalidade = value!),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriceRangeSection(BuildContext context) {
-    final unit = _finalidade == 'Venda' ? 'R\$ (Venda)' : 'R\$ (Aluguel/Mês)';
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('VALOR DO IMÓVEL ($unit)'),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildCustomInputField(
-                  controller: _minPriceController,
-                  placeholder: 'Mín. (R\$)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text('até',
-                  style: TextStyle(
-                      color: CupertinoColors.systemGrey.resolveFrom(context))),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCustomInputField(
-                  controller: _maxPriceController,
-                  placeholder: 'Máx. (R\$)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLocationSection(BuildContext context) {
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('LOCALIZAÇÃO'),
-      children: [
-        CupertinoListTile(
-          padding: EdgeInsets.zero,
-          title: CupertinoTextField(
-            controller: _localizacaoController,
-            placeholder: 'Estado, Cidade, Bairro ou Rua...',
-            keyboardType: TextInputType.text,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: const BoxDecoration(
-              color: CupertinoColors.tertiarySystemFill,
-            ),
-            prefix: Padding(
-              padding: const EdgeInsets.only(left: 16.0),
-              child: Icon(CupertinoIcons.search,
-                  color: CupertinoColors.systemGrey),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAreaRangeSection(BuildContext context) {
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('METRAGEM (ÁREA ÚTIL m²)'),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildCustomInputField(
-                  controller: _minAreaController,
-                  placeholder: 'Mín. (m²)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text('até',
-                  style: TextStyle(
-                      color: CupertinoColors.systemGrey.resolveFrom(context))),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildCustomInputField(
-                  controller: _maxAreaController,
-                  placeholder: 'Máx. (m²)',
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTypeSection(BuildContext context) {
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('TIPO DE IMÓVEL'),
-      children: [
-        _buildPickerRow(
-          label: 'Tipo',
-          selectedValue: _propertyType ?? 'Selecionar',
-          onTap: () => _showPicker(_propertyTypes, (index) {
-            setState(() {
-              _propertyType = _propertyTypes[index];
-            });
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeaturesAndBedroomsSection(BuildContext context) {
-    return CupertinoListSection.insetGrouped(
-      header: _buildListHeader('CARACTERÍSTICAS'),
-      children: [
-        _buildNumberStepper(
-          label: 'Número de Quartos',
-          value: _quartos,
-          onChanged: (newVal) => setState(() => _quartos = newVal.toInt()),
-          minimum: 1,
-        ),
-        _buildSwitchRow(
-          context,
-          label: 'Acesso à Garagem',
-          value: _temGaragem,
-          onChanged: (val) => setState(() => _temGaragem = val),
-        ),
-        _buildSwitchRow(
-          context,
-          label: 'Imóvel Mobiliado',
-          value: _eMobiliado,
-          onChanged: (val) => setState(() => _eMobiliado = val),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAmenitiesSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildListHeader('COMODIDADES'),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: _buildAmenitiesWrap(),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryColor = CupertinoTheme.of(context).primaryColor;
-    final isDarkMode = CupertinoTheme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? Colors.black : Colors.white;
-    final accentColor = CupertinoColors.systemBlue;
-
-    return CupertinoPageScaffold(
-      backgroundColor: backgroundColor,
-      // App Bar estilo iOS
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: backgroundColor,
-        border: Border(
-            bottom: BorderSide(
-                color: isDarkMode
-                    ? CupertinoColors.systemGrey5
-                    : CupertinoColors.systemGrey4,
-                width: 0.5)),
-        padding: const EdgeInsetsDirectional.only(end: 8),
-        leading: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () => Navigator.pop(context),
-          child: Text('Cancelar', style: TextStyle(color: accentColor)),
-        ),
-        middle: Text('Filtros de Imóveis',
-            style: TextStyle(
-                color:
-                    isDarkMode ? CupertinoColors.white : CupertinoColors.black,
-                fontWeight: FontWeight.w600)),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: _aplicarFiltros,
-          child: Text('Aplicar',
-              style:
-                  TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
-        ),
-      ),
-
-      // Corpo principal
-      child: SafeArea(
-        child: Column(
-          children: [
+            Icon(icon, color: primaryColor, size: 20),
+            const SizedBox(width: 12),
             Expanded(
-              child: ListView(
-                children: [
-                  _buildTransactionAndPurposeSection(context),
-                  _buildPriceRangeSection(context),
-                  _buildLocationSection(context),
-                  _buildAreaRangeSection(context),
-                  _buildTypeSection(context),
-                  _buildFeaturesAndBedroomsSection(context),
-                  _buildAmenitiesSection(context),
-                  const SizedBox(height: 80),
-                ],
-              ),
+              child: Text('$title: $value',
+                  style:
+                      theme.textTheme.bodyLarge?.copyWith(color: primaryColor)),
             ),
-
-            // BOTÃO FLUTUANTE DE APLICAR FILTROS
-            Container(
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                border: Border(
-                    top: BorderSide(
-                        color: isDarkMode
-                            ? CupertinoColors.systemGrey5
-                            : CupertinoColors.systemGrey4,
-                        width: 0.5)),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: SafeArea(
-                top: false,
-                child: CupertinoButton.filled(
-                  borderRadius: BorderRadius.circular(12),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  onPressed: _aplicarFiltros,
-                  child: Center(
-                    child: Text(
-                      'Aplicar Filtros e Buscar',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: CupertinoColors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            Icon(CupertinoIcons.chevron_down, color: primaryColor, size: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    required ThemeData theme,
+    required Color fieldColor,
+    required Color primaryColor,
+    Widget? suffixIcon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    String? suffixText,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: fieldColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: theme.brightness == Brightness.dark
+                ? Colors.white12
+                : Colors.grey.shade300,
+            width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: primaryColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
+              decoration: InputDecoration(
+                hintText: hintText,
+                border: InputBorder.none,
+                hintStyle: TextStyle(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade600),
+                suffixText: suffixText,
+                suffixStyle: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.grey
+                        : Colors.grey.shade600),
+              ),
+            ),
+          ),
+          if (suffixIcon != null) suffixIcon,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionTile({
+    required ThemeData theme,
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    String? subtitle,
+  }) {
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: isDark ? Colors.white12 : Colors.grey.shade300, width: 1),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500, color: primaryColor)),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600)),
+                ]
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: primaryColor,
+            trackColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepperField({
+    required ThemeData theme,
+    required String title,
+    required int value,
+    required ValueChanged<int> onChanged,
+    int minimum = 0,
+    IconData icon = CupertinoIcons.add_circled_solid,
+  }) {
+    final primaryColor = theme.primaryColor;
+    final isDark = theme.brightness == Brightness.dark;
+    final boxColor = isDark ? Colors.white10 : Colors.grey.shade100;
+    final textColor = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: boxColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: isDark ? Colors.white12 : Colors.grey.shade300, width: 1),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Icon(icon, color: textColor, size: 20),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(title,
+                      style:
+                          theme.textTheme.bodyLarge?.copyWith(color: textColor),
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: value > minimum ? () => onChanged(value - 1) : null,
+                child: Icon(CupertinoIcons.minus_circle_fill,
+                    size: 30,
+                    color:
+                        value > minimum ? primaryColor : Colors.grey.shade400),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text('$value',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold, color: textColor)),
+              ),
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () => onChanged(value + 1),
+                child: Icon(CupertinoIcons.plus_circle_fill,
+                    size: 30, color: primaryColor),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

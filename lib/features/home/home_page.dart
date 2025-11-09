@@ -1,7 +1,9 @@
+import 'package:aura_frontend/data/mocks/corretor_mock.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
 import 'package:aura_frontend/features/home/imovel_filter_page.dart';
 import 'package:aura_frontend/features/home/imovel_performance_page.dart';
 import 'package:aura_frontend/features/home/propriety_card.dart';
+import 'package:aura_frontend/features/home/selecao_subaba_page.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +13,6 @@ import '../../widgets/bottom_nav.dart';
 import '../contract/contrato_page.dart';
 import '../pagamentos/pagamentos_page.dart';
 import '../../widgets/notifications_modal.dart';
-import '../../data/mocks/corretor_mock.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,11 +24,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
+  //corretor: mockCorretor
   final List<Widget> _screens = [
     const HomeScreenContent(), // Índice 0: Home
     const ContratoContent(), // Índice 1: Contratos (Se o construtor for const)
     const PagamentoContent(), // Índice 2: Pagamentos (Se o construtor for const)
-    const CorretorProfilePage(corretor: mockCorretor), // Índice 3: Perfil
+    const SelecaoSubabaPage(corretor: mockCorretor), // Índice 3: Perfil
   ];
 
   void _onItemTapped(int index) {
@@ -90,8 +92,8 @@ class HomeScreenContent extends StatelessWidget {
     final selectedFilters = await Navigator.push(
       context,
       CupertinoPageRoute(
-        fullscreenDialog: true, // Garante que a tela abra como modal
-        builder: (context) => const ImovelFilterPage(),
+        fullscreenDialog: true,
+        builder: (context) => const FilterImovelPage(),
       ),
     );
 
