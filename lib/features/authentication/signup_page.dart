@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -87,6 +88,9 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _regiaoAtuacaoController =
       TextEditingController(); // Corretor
 
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+  bool _isLoading = false;
+
   // Formatador
   var phoneMaskFormatter = MaskTextInputFormatter(
       mask: '(##) #####-####', // Máscara (XX) XXXXX-XXXX
@@ -110,6 +114,8 @@ class _SignUpPageState extends State<SignUpPage> {
   DateTime _dataNascimento = DateTime(2000, 1, 1);
 
   void _handleSignUp() async {
+    if (_isLoading) return; // Evita cliques múltiplos
+
     if (!_isProprietario && !_isAdquirente && !_isCorretor) {
       showCupertinoDialog(
         context: context,
@@ -128,46 +134,121 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    print("Simulação: Dados de cadastro prontos para envio.");
+    // 1. Coleta e Prepara os Dados
+    // Formatando a data para YYYY-MM-DD, conforme esperado pelo backend
+    final String dataNascimentoFormatada =
+        _dataNascimento.toIso8601String().split('T').first;
 
-    final accepted =
-        await Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+    final String telefonesLimpos = phoneMaskFormatter.getUnmaskedText();
 
-    if (mounted) {
-      if (accepted == true) {
+    final userData = {
+      // CAMPOS PRINCIPAIS
+      'cpf': cpfMaskFormatter.getUnmaskedText(),
+      'prenome': _nomeController.text.trim(),
+      'sobrenome': _sobrenomeController.text.trim(),
+      'email': _emailController.text.trim(),
+      'senha': _passwordController.text.trim(), // Python espera 'senha'
+
+      // CORREÇÃO DE NOMES
+      'data_nasc': _dataNascimento
+          .toIso8601String()
+          .split('T')
+          .first, // Python espera 'data_nasc'
+      'telefones':
+          telefonesLimpos, // Python espera 'telefones' (lista separada por vírgula)
+
+      // FLAGS DE TIPO (Python espera 'proprietario', 'adquirente', 'corretor')
+      'proprietario': _isProprietario, // Boolean True/False
+      'adquirente': _isAdquirente, // Boolean True/False
+      'corretor': _isCorretor, // Boolean True/False
+
+      // CAMPOS CONDICIONAIS (Se a flag for True)
+      if (_isAdquirente)
+        'pontuacao_credito': int.tryParse(_pontuacaoCreditoController.text) ??
+            0, // Python espera 'pontuacao_credito'
+
+      if (_isCorretor) 'creci': _creciController.text.trim(),
+
+      if (_isCorretor) 'especialidade': _especialidadeController.text.trim(),
+
+      if (_isCorretor)
+        'regiao_atuação': _regiaoAtuacaoController.text
+            .trim(), // Python espera 'regiao_atuação' (com ç)
+    };
+
+    setState(() => _isLoading = true);
+
+    // 2. Tenta registrar no backend
+    try {
+      await _authRepository.registerUser(userData);
+
+      // 3. Se o registro for bem-sucedido, prossegue para a Política
+      final accepted =
+          await Navigator.pushNamed(context, AppRoutes.privacyPolicy);
+
+      if (mounted) {
+        if (accepted == true) {
+          // Cadastro finalizado e aceite de termos
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text("Cadastro Concluído"),
+              content: const Text(
+                  "Bem-vindo(a)! Sua conta foi criada e os Termos de Privacidade foram aceitos. Clique em 'OK' para ir para o Login."),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text("OK"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, AppRoutes.login, (route) => false);
+                  },
+                ),
+              ],
+            ),
+          );
+        } else {
+          // Recusa de Termos (O usuário existe no banco, mas não aceitou os termos)
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text("Recusa de Termos"),
+              content: const Text(
+                  "O aceite da Política de Privacidade é necessário para finalizar o cadastro e usar o sistema."),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text("OK"),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // 4. Trata erro do Backend/Rede
+      if (mounted) {
+        // Tenta extrair a mensagem de erro da Exceção
+        String errorMessage = e.toString().contains("Exception:")
+            ? e.toString().split("Exception:")[1].trim()
+            : "Ocorreu um erro desconhecido.";
+
         showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text("Cadastro Concluído"),
-            content: const Text(
-                "Bem-vindo(a)! Sua conta foi criada e os Termos de Privacidade foram aceitos. Clique em 'OK' para ir para o Login."),
+            title: const Text("Falha no Cadastro"),
+            content: Text(errorMessage),
             actions: [
               CupertinoDialogAction(
-                child: const Text("OK"),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, AppRoutes.login, (route) => false);
-                },
-              ),
+                  child: const Text("OK"),
+                  onPressed: () => Navigator.pop(context)),
             ],
           ),
         );
-      } else {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text("Recusa de Termos"),
-            content: const Text(
-                "O aceite da Política de Privacidade é necessário para finalizar o cadastro e usar o sistema."),
-            actions: [
-              CupertinoDialogAction(
-                child: const Text("OK"),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -462,15 +543,19 @@ class _SignUpPageState extends State<SignUpPage> {
                     height: 56,
                     child: CupertinoButton(
                       color: primaryColor,
-                      onPressed: _handleSignUp,
+                      // Se estiver carregando, onPressed é null (desabilitado)
+                      onPressed: _isLoading ? null : _handleSignUp,
                       borderRadius: BorderRadius.circular(14),
-                      child: Text(
-                        "Criar Conta Aura",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: backgroundColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CupertinoActivityIndicator(
+                              color: Colors.white) // Indicador de carregamento
+                          : Text(
+                              "Criar Conta Aura",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: backgroundColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 32),

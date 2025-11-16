@@ -7,7 +7,7 @@ class TokenManager {
   static const _storage = FlutterSecureStorage();
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
-  static const String baseUrl = 'https://sua-corretora-api.com/v1';
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   /// Salva novos tokens após login ou refresh
   static Future<void> saveTokens(String access, String refresh) async {
@@ -36,7 +36,8 @@ class TokenManager {
     final refreshToken = await getRefreshToken();
     if (refreshToken == null) return false;
 
-    final url = Uri.parse('$baseUrl${Endpoints.auth}');
+    final url = Uri.parse('$baseUrl${Endpoints.authRefreshToken}');
+
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -45,9 +46,11 @@ class TokenManager {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      // O Flask retorna 'access_token' e 'refresh_token'
       await saveTokens(data['access_token'], data['refresh_token']);
       return true;
     } else {
+      // Se a renovação falhar, a sessão é encerrada
       await clearTokens();
       return false;
     }

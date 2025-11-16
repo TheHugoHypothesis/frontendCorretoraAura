@@ -1,10 +1,16 @@
+// lib/core/api/endpoints.dart
+
 class Endpoints {
   // Rotas de Autenticação e Usuário
   static const String authLogin = '/auth/login';
-  static const String authRegister = '/users/register';
+  static const String authRegister = '/auth/register';
+
   static const String authRequestOtp = '/auth/request-otp';
   static const String authVerifyOtp = '/auth/verify-otp';
   static const String authResetPassword = '/auth/reset-password';
+
+  static const String authRefreshToken = '/auth/refresh';
+
   static const String userUpdateProfile = '/users/profile/update';
 
   // Rotas de Gestão de Imóveis (CRUD)
@@ -50,5 +56,6 @@ class Endpoints {
   static const String contratoMaisAlugados = '/contratos/obter-mais-alugados';
   static const String contratoPessoasImovel = '/contratos/obter-pessoas-imovel';
 
-  static const String auth = '/auth';
+  // ❌ REMOVER: Esta rota não é um endpoint, mas o prefixo do Blueprint.
+  // static const String auth = '/auth';
 }

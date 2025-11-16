@@ -11,9 +11,8 @@ class AuthenticationRepository {
   // LOGIN
   Future<CorretorModel> login(String cpf, String password) async {
     final responseData = await _apiClient.post(
-      Endpoints.authLogin,
-      {'cpf': cpf, 'password': password},
-    );
+        Endpoints.authLogin, {'cpf': cpf, 'password': password},
+        isLoginRoute: true);
 
     // Salva os tokens localmente (JWT access + refresh)
     await TokenManager.saveTokens(
@@ -50,6 +49,7 @@ class AuthenticationRepository {
     await _apiClient.post(
       Endpoints.authRegister,
       userData,
+      requireAuth: false,
     );
   }
 

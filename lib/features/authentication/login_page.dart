@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
@@ -73,6 +74,9 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _cpfController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+  bool _isLoading = false; // 👈 Estado de Carregamento
+
   var cpfMaskFormatter = MaskTextInputFormatter(
       mask: '###.###.###-##', // Máscara XXX.XXX.XXX-XX
       filter: {"#": RegExp(r'[0-9]')},
@@ -81,31 +85,61 @@ class _LoginPageState extends State<LoginPage> {
   // Variável para controlar a visibilidade da senha
   bool _isPasswordVisible = false;
 
-  // Função de simulação de login
-  void _handleLogin() {
+  void _handleLogin() async {
+    if (_isLoading) return;
+
     final password = _passwordController.text;
     final rawCpf = cpfMaskFormatter.getUnmaskedText();
 
-    if (rawCpf.length == 11 && password.isNotEmpty) {
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.home,
-      );
-    } else {
+    if (rawCpf.length != 11 || password.isEmpty) {
       showCupertinoDialog(
         context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text("Erro de Login"),
-          content: const Text(
-              "CPF ou Senha inválidos. Por favor, verifique seus dados."),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text("OK"),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
+        builder: (context) => const CupertinoAlertDialog(
+          title: Text("Dados Incompletos"),
+          content: Text("Por favor, verifique seu CPF e Senha."),
         ),
       );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final corretor = await _authRepository.login(rawCpf, password);
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.home,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage;
+
+        if (e.toString().contains("Exception:")) {
+          errorMessage = e.toString().split("Exception:")[1].trim();
+        } else {
+          errorMessage = "Falha de comunicação com o servidor.";
+        }
+
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Falha no Login"),
+            content: Text(errorMessage),
+            actions: [
+              CupertinoDialogAction(
+                  child: const Text("OK"),
+                  onPressed: () => Navigator.pop(context)),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -267,19 +301,22 @@ class _LoginPageState extends State<LoginPage> {
                       height: 56,
                       child: CupertinoButton(
                         color: primaryColor,
-                        onPressed: _handleLogin,
-                        borderRadius:
-                            BorderRadius.circular(14), // Borda mais suave
-                        child: Text(
-                          "Entrar",
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: backgroundColor, // Cor do texto invertida
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        onPressed: _isLoading
+                            ? null
+                            : _handleLogin, // Desabilita durante o loading
+                        borderRadius: BorderRadius.circular(14),
+                        child: _isLoading
+                            ? const CupertinoActivityIndicator(
+                                color: Colors.white) // Indicador
+                            : Text(
+                                "Entrar",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: backgroundColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
-
                     const SizedBox(height: 16), // Espaçamento entre botões
 
                     // Botão de Cadastro (Secundário, Estilo Texto)
