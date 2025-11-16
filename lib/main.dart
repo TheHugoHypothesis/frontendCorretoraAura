@@ -21,6 +21,8 @@ import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:aura_frontend/features/authentication/login_page.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -67,6 +69,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Aura Corretora Imobiliária',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('pt', 'BR'), // Suporte ao Português do Brasil
+      ],
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(

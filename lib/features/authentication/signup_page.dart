@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter/services.dart';
 
+import 'dart:ui';
+
 // Este é o widget auxiliar do seu login, ele deve ser incluído neste arquivo
 // ou importado se estiver em um arquivo separado para funcionar.
 Widget _buildTextField(
