@@ -11,8 +11,6 @@ class Endpoints {
 
   static const String authRefreshToken = '/auth/refresh';
 
-  static const String userUpdateProfile = '/users/profile/update';
-
   // Rotas de Gestão de Imóveis (CRUD)
   static const String imoveisList = '/imoveis';
   static const String imoveisRegister = '/imoveis/register';
@@ -35,6 +33,7 @@ class Endpoints {
   static const String usuarioPerfisImoveis = '/usuario/perfis-imoveis';
   static const String usuarioImoveisProprietario =
       '/usuario/imoveis-proprietario';
+  static const String userUpdateProfile = '/usuario/perfil/update';
 
   // Rotas de Pagamentos (f)
   static const String pagamentosCadastro = '/pagamentos/cadastro';

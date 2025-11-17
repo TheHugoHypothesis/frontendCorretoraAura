@@ -5,7 +5,11 @@ import '../api/endpoints.dart';
 import '../api/token_manager.dart';
 import '../../data/models/corretor_model.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
 class AuthenticationRepository {
+  static const String _userProfileKey = 'current_user_profile';
   final ApiClient _apiClient = ApiClient();
 
   // LOGIN
@@ -19,11 +23,11 @@ class AuthenticationRepository {
       responseData['access_token'],
       responseData['refresh_token'],
     );
-
     // Mapeia o usuário retornado
     try {
       final user = responseData['user'];
-      return CorretorModel(
+
+      final CorretorModel corretor = CorretorModel(
         prenome: user['prenome'],
         sobrenome: user['sobrenome'],
         cpf: cpf,
@@ -34,14 +38,48 @@ class AuthenticationRepository {
         especialidade: user['especialidade'],
         regiaoAtuacao: user['regiaoAtuacao'],
       );
+
+      final prefs = await SharedPreferences.getInstance(); // API Legada
+      prefs.setString(_userProfileKey, json.encode(corretor.toJson()));
+
+      return corretor;
     } catch (e) {
       throw Exception("Erro ao mapear dados do corretor: $e");
+    }
+  }
+
+  Future<CorretorModel?> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance(); // API Legada
+    final userJson = prefs.getString(_userProfileKey);
+
+    if (userJson == null) {
+      return null;
+    }
+
+    try {
+      final Map<String, dynamic> userMap = json.decode(userJson);
+      return CorretorModel(
+        prenome: userMap['prenome'],
+        sobrenome: userMap['sobrenome'],
+        cpf: userMap['cpf'],
+        email: userMap['email'],
+        telefone: userMap['telefone'],
+        dataNascimento: userMap['dataNascimento'] ?? '',
+        creci: userMap['creci'] ?? '',
+        especialidade: userMap['especialidade'] ?? '',
+        regiaoAtuacao: userMap['regiaoAtuacao'] ?? '',
+      );
+    } catch (e) {
+      print("Falha ao decodificar perfil salvo: $e");
+      return null;
     }
   }
 
   /// LOGOUT
   Future<void> logout() async {
     await TokenManager.clearTokens();
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove(_userProfileKey);
   }
 
   /// CADASTRO
@@ -91,5 +129,25 @@ class AuthenticationRepository {
   /// RENOVAR TOKEN MANUALMENTE
   Future<bool> refreshSession() async {
     return await TokenManager.refreshAccessToken();
+  }
+
+  Future<CorretorModel> updateCorretorProfile(
+      CorretorModel updatedCorretor) async {
+    final Map<String, dynamic> userDataMap = updatedCorretor.toJson();
+
+    try {
+      await _apiClient.put(
+        Endpoints.userUpdateProfile,
+        userDataMap,
+        requireAuth: true,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString(_userProfileKey, json.encode(updatedCorretor.toJson()));
+
+      return updatedCorretor;
+    } catch (e) {
+      throw Exception('Falha ao atualizar perfil: $e');
+    }
   }
 }

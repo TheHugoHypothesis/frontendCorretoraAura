@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/data/models/corretor_model.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,7 +37,8 @@ Widget _buildProfileInfoTile({
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey)),
+        Text(title,
+            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey)),
         Text(
           value,
           style: theme.textTheme.bodyLarge?.copyWith(
@@ -102,24 +105,25 @@ Widget _buildTextField({
 // ----------------------- PÁGINA PRINCIPAL -----------------------
 
 class CorretorProfilePage extends StatefulWidget {
-  final CorretorModel corretor;
-
-  const CorretorProfilePage({super.key, required this.corretor});
+  const CorretorProfilePage({super.key});
 
   @override
   State<CorretorProfilePage> createState() => _CorretorProfilePageState();
 }
 
 class _CorretorProfilePageState extends State<CorretorProfilePage> {
+  CorretorModel? _corretorProfile;
+  bool _isLoading = true;
+
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+
   late TextEditingController _prenomeController;
   late TextEditingController _sobrenomeController;
   late TextEditingController _emailController;
+  final List<TextEditingController> _telefoneControllers = [];
 
   late String _especialidadeSelecionada;
   late String _regiaoAtuacaoSelecionada;
-
-  // Telefones (até 3)
-  final List<TextEditingController> _telefoneControllers = [];
 
   // Imagem
   File? _profileImage;
@@ -131,23 +135,49 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     type: MaskAutoCompletionType.lazy,
   );
 
+  Future<void> _loadCorretorProfile() async {
+    final profile = await _authRepository.loadProfile();
+
+    if (mounted) {
+      if (profile != null) {
+        setState(() {
+          _corretorProfile = profile;
+          _isLoading = false;
+          _initializeControllers(profile);
+        });
+      } else {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+      }
+    }
+  }
+
+  void _initializeControllers(CorretorModel profile) {
+    _prenomeController = TextEditingController(text: profile.prenome);
+    _sobrenomeController = TextEditingController(text: profile.sobrenome);
+    _emailController = TextEditingController(text: profile.email);
+
+    final telefonesPuros =
+        profile.telefone.split(',').map((t) => t.trim()).toList();
+    _telefoneControllers.clear();
+
+    if (telefonesPuros.isEmpty ||
+        (telefonesPuros.length == 1 && telefonesPuros.first.isEmpty)) {
+      _telefoneControllers.add(TextEditingController());
+    } else {
+      for (var numeroPuro in telefonesPuros) {
+        final numeroFormatado = phoneMaskFormatter.maskText(numeroPuro);
+        _telefoneControllers.add(TextEditingController(text: numeroFormatado));
+      }
+    }
+
+    _especialidadeSelecionada = profile.especialidade;
+    _regiaoAtuacaoSelecionada = profile.regiaoAtuacao;
+  }
+
   @override
   void initState() {
     super.initState();
-
-    _prenomeController = TextEditingController(text: widget.corretor.prenome);
-    _sobrenomeController = TextEditingController(text: widget.corretor.sobrenome);
-    _emailController = TextEditingController(text: widget.corretor.email);
-
-    // Telefones
-    final telefones = widget.corretor.telefone.split(',').map((t) => t.trim()).toList();
-    if (telefones.isEmpty) telefones.add('');
-    for (var t in telefones) {
-      _telefoneControllers.add(TextEditingController(text: t));
-    }
-
-    _especialidadeSelecionada = widget.corretor.especialidade;
-    _regiaoAtuacaoSelecionada = widget.corretor.regiaoAtuacao;
+    _loadCorretorProfile();
   }
 
   @override
@@ -178,26 +208,99 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
   }
 
   Future<void> _pickProfileImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() => _profileImage = File(pickedFile.path));
     }
   }
 
-  void _saveProfileChanges() {
-    final telefones = _telefoneControllers.map((c) => c.text.trim()).where((t) => t.isNotEmpty).join(', ');
-    debugPrint('Telefones: $telefones');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Perfil atualizado com sucesso!')),
-    );
-  }
-
   void _logout() {
+    _authRepository.logout();
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
-  void _showPicker(List<String> items, String currentValue, Function(String) onSelected) {
+  void _saveProfileChanges() async {
+    if (_isLoading) return;
+
+    final String telefonesRaw = _telefoneControllers
+        .map((c) => phoneMaskFormatter.unmaskText(c.text))
+        .where((t) => t.isNotEmpty)
+        .join(',');
+
+    // Validação básica
+    if (_prenomeController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        telefonesRaw.isEmpty) {
+      _showAlert(
+          "Dados Incompletos", "Prenome, Email e Telefone são obrigatórios.");
+      return;
+    }
+
+    final updatedCorretor = CorretorModel(
+      // Dados editáveis:
+      prenome: _prenomeController.text.trim(),
+      sobrenome: _sobrenomeController.text.trim(),
+      email: _emailController.text.trim(),
+      telefone: telefonesRaw, // String limpa de telefones
+      especialidade: _especialidadeSelecionada, // Seleção (Picker)
+      regiaoAtuacao: _regiaoAtuacaoSelecionada, // Seleção (Picker)
+
+      // Dados Críticos (Mantidos do perfil original)
+      cpf: _corretorProfile!.cpf,
+      creci: _corretorProfile!.creci,
+      dataNascimento: _corretorProfile!.dataNascimento,
+    );
+
+    setState(() => _isLoading = true);
+
+    try {
+      // 4. Chama o Repositório para atualizar no Backend
+      await _authRepository.updateCorretorProfile(updatedCorretor);
+
+      // 5. Sucesso: Atualiza o estado local (UI) e persiste no SharedPreferences (dentro do repositório)
+      if (mounted) {
+        setState(() {
+          _corretorProfile = updatedCorretor;
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Perfil atualizado com sucesso!'),
+            backgroundColor: CupertinoColors.activeGreen));
+      }
+    } catch (e) {
+      // 6. Falha: Exibe erro de API/rede
+      if (mounted) {
+        String errorMessage = e.toString().contains("Exception:")
+            ? e.toString().split("Exception:")[1].trim()
+            : "Erro de comunicação com o servidor.";
+
+        setState(() => _isLoading = false);
+        _showAlert("Erro ao Salvar", errorMessage);
+      }
+    }
+  }
+
+// ⚠️ Este é um método auxiliar que você deve garantir que exista na classe.
+  void _showAlert(String title, String content) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPicker(
+      List<String> items, String currentValue, Function(String) onSelected) {
     showCupertinoModalPopup<void>(
       context: context,
       builder: (BuildContext context) => Container(
@@ -231,9 +334,23 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     final primaryColor = isDark ? Colors.white : Colors.black;
     final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
 
-    final String cpfDisplay = widget.corretor.cpf;
-    final String creciDisplay = widget.corretor.creci;
-    final String dataNascimentoDisplay = widget.corretor.dataNascimento;
+    if (_isLoading) {
+      return const Center(
+          child: CupertinoActivityIndicator()); // ⬅️ Tela de Loading
+    }
+
+    if (_corretorProfile == null) {
+      return Center(
+        child: Text("Perfil não encontrado.",
+            style: TextStyle(color: primaryColor)),
+      );
+    }
+
+    final CorretorModel profile = _corretorProfile!;
+
+    final String cpfDisplay = profile.cpf;
+    final String creciDisplay = profile.creci;
+    final String dataNascimentoDisplay = profile.dataNascimento;
 
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
@@ -246,7 +363,8 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   color: primaryColor,
                 )),
             backgroundColor: isDark ? Colors.black : Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 0.0)),
+            border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300, width: 0.0)),
             trailing: CupertinoButton(
               padding: EdgeInsets.zero,
               onPressed: _saveProfileChanges,
@@ -259,7 +377,8 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -274,11 +393,14 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                             height: 120,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                              color: isDark
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade200,
                             ),
                             child: ClipOval(
                               child: _profileImage != null
-                                  ? Image.file(_profileImage!, fit: BoxFit.cover)
+                                  ? Image.file(_profileImage!,
+                                      fit: BoxFit.cover)
                                   : Icon(CupertinoIcons.person_alt_circle_fill,
                                       size: 100, color: Colors.grey.shade500),
                             ),
@@ -291,10 +413,12 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                               decoration: BoxDecoration(
                                 color: primaryColor,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border:
+                                    Border.all(color: Colors.white, width: 2),
                               ),
                               child: Icon(CupertinoIcons.camera_fill,
-                                  color: isDark ? Colors.black : Colors.white, size: 20),
+                                  color: isDark ? Colors.black : Colors.white,
+                                  size: 20),
                             ),
                           ),
                         ],
@@ -346,8 +470,10 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                             suffixIcon: _telefoneControllers.length > 1
                                 ? GestureDetector(
                                     onTap: () => _removeTelefone(index),
-                                    child: const Icon(CupertinoIcons.xmark_circle_fill,
-                                        color: Colors.red, size: 22),
+                                    child: const Icon(
+                                        CupertinoIcons.xmark_circle_fill,
+                                        color: Colors.red,
+                                        size: 22),
                                   )
                                 : null,
                           ),
@@ -364,7 +490,8 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: const [
-                                Icon(CupertinoIcons.plus_circle_fill, color: Color.fromARGB(255, 0, 0, 0)),
+                                Icon(CupertinoIcons.plus_circle_fill,
+                                    color: Color.fromARGB(255, 0, 0, 0)),
                                 SizedBox(width: 6),
                                 Text("Adicionar telefone"),
                               ],
@@ -390,9 +517,21 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   // OUTRAS SEÇÕES (igual ao original)
                   _buildSectionHeader(theme, "Atuação Profissional"),
                   const SizedBox(height: 16),
-                  _buildProfileInfoTile(theme: theme, title: "CPF", value: cpfDisplay, primaryColor: primaryColor),
-                  _buildProfileInfoTile(theme: theme, title: "CRECI", value: creciDisplay, primaryColor: primaryColor),
-                  _buildProfileInfoTile(theme: theme, title: "Nascimento", value: dataNascimentoDisplay, primaryColor: primaryColor),
+                  _buildProfileInfoTile(
+                      theme: theme,
+                      title: "CPF",
+                      value: cpfDisplay,
+                      primaryColor: primaryColor),
+                  _buildProfileInfoTile(
+                      theme: theme,
+                      title: "CRECI",
+                      value: creciDisplay,
+                      primaryColor: primaryColor),
+                  _buildProfileInfoTile(
+                      theme: theme,
+                      title: "Nascimento",
+                      value: dataNascimentoDisplay,
+                      primaryColor: primaryColor),
 
                   const SizedBox(height: 40),
                   SizedBox(

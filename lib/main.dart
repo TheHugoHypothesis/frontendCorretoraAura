@@ -108,6 +108,8 @@ class MyApp extends StatelessWidget {
 
         AppRoutes.gerenciamentoProprietarios: (context) =>
             const ProprietarioListPage(),
+
+        AppRoutes.perfilCorretor: (context) => const CorretorProfilePage()
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {
@@ -129,16 +131,6 @@ class MyApp extends StatelessWidget {
               fullscreenDialog: true,
               settings: settings,
             );
-
-          case AppRoutes.perfilCorretor:
-            final corretorModel = settings.arguments;
-
-            if (corretorModel is CorretorModel) {
-              return CupertinoPageRoute(
-                builder: (context) =>
-                    CorretorProfilePage(corretor: corretorModel),
-              );
-            }
 
           case AppRoutes.resetPassword:
             final args = settings.arguments as Map<String, String>;

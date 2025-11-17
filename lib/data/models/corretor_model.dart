@@ -21,4 +21,32 @@ class CorretorModel {
     required this.especialidade,
     required this.regiaoAtuacao,
   });
+
+  factory CorretorModel.fromJson(Map<String, dynamic> json) {
+    return CorretorModel(
+      prenome: json['prenome'] ?? '',
+      sobrenome: json['sobrenome'] ?? '',
+      cpf: json['cpf'] ?? '',
+      telefone: json['telefone'] ?? '',
+      email: json['email'] ?? '',
+      dataNascimento: json['dataNascimento'] ?? '',
+      creci: json['creci'] ?? '',
+      especialidade: json['especialidade'] ?? '',
+      regiaoAtuacao: json['regiaoAtuacao'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'prenome': prenome,
+      'sobrenome': sobrenome,
+      'cpf': cpf,
+      'telefone': telefone,
+      'email': email,
+      'dataNascimento': dataNascimento,
+      'creci': creci,
+      'especialidade': especialidade,
+      'regiaoAtuacao': regiaoAtuacao,
+    };
+  }
 }
