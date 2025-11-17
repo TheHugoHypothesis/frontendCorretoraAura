@@ -7,6 +7,7 @@ import '../../data/models/corretor_model.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:io';
 
 class AuthenticationRepository {
   static const String _userProfileKey = 'current_user_profile';
@@ -28,16 +29,16 @@ class AuthenticationRepository {
       final user = responseData['user'];
 
       final CorretorModel corretor = CorretorModel(
-        prenome: user['prenome'],
-        sobrenome: user['sobrenome'],
-        cpf: cpf,
-        email: user['email'],
-        telefone: user['telefone'],
-        dataNascimento: user['dataNascimento'],
-        creci: user['creci'],
-        especialidade: user['especialidade'],
-        regiaoAtuacao: user['regiaoAtuacao'],
-      );
+          prenome: user['prenome'],
+          sobrenome: user['sobrenome'],
+          cpf: cpf,
+          email: user['email'],
+          telefone: user['telefone'],
+          dataNascimento: user['dataNascimento'],
+          creci: user['creci'],
+          especialidade: user['especialidade'],
+          regiaoAtuacao: user['regiaoAtuacao'],
+          profileImageUrl: user['profile_image_url']);
 
       final prefs = await SharedPreferences.getInstance(); // API Legada
       prefs.setString(_userProfileKey, json.encode(corretor.toJson()));
@@ -59,20 +60,27 @@ class AuthenticationRepository {
     try {
       final Map<String, dynamic> userMap = json.decode(userJson);
       return CorretorModel(
-        prenome: userMap['prenome'],
-        sobrenome: userMap['sobrenome'],
-        cpf: userMap['cpf'],
-        email: userMap['email'],
-        telefone: userMap['telefone'],
-        dataNascimento: userMap['dataNascimento'] ?? '',
-        creci: userMap['creci'] ?? '',
-        especialidade: userMap['especialidade'] ?? '',
-        regiaoAtuacao: userMap['regiaoAtuacao'] ?? '',
-      );
+          prenome: userMap['prenome'],
+          sobrenome: userMap['sobrenome'],
+          cpf: userMap['cpf'],
+          email: userMap['email'],
+          telefone: userMap['telefone'],
+          dataNascimento: userMap['dataNascimento'] ?? '',
+          creci: userMap['creci'] ?? '',
+          especialidade: userMap['especialidade'] ?? '',
+          regiaoAtuacao: userMap['regiaoAtuacao'] ?? '',
+          profileImageUrl: userMap['profile_image_url'] ?? '');
     } catch (e) {
       print("Falha ao decodificar perfil salvo: $e");
       return null;
     }
+  }
+
+  Future<String> uploadProfilePicture(String userId, File imageFile) async {
+    final responseData = await _apiClient
+        .uploadFile(Endpoints.userUploadPicture, imageFile, requireAuth: true);
+
+    return responseData['url'] as String;
   }
 
   /// LOGOUT

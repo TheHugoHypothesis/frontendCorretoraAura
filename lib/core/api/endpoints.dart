@@ -34,6 +34,7 @@ class Endpoints {
   static const String usuarioImoveisProprietario =
       '/usuario/imoveis-proprietario';
   static const String userUpdateProfile = '/usuario/perfil/update';
+  static const String userUploadPicture = '/usuario/upload_foto_perfil';
 
   // Rotas de Pagamentos (f)
   static const String pagamentosCadastro = '/pagamentos/cadastro';

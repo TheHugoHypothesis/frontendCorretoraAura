@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'token_manager.dart';
+import 'dart:io';
 
 class ApiClient {
   static const String baseUrl = 'http://127.0.0.1:8000';
@@ -57,6 +58,28 @@ class ApiClient {
     final response = await http.delete(url, headers: headers);
     return await _handleResponse(
         response, () => delete(endpoint, requireAuth: requireAuth));
+  }
+
+  Future<Map<String, dynamic>> uploadFile(String endpoint, File file,
+      {bool requireAuth = true}) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    final request = http.MultipartRequest('POST', url);
+
+    final headers = await _buildHeaders(requireAuth);
+    request.headers.addAll(headers);
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'profile_image_url',
+        file.path,
+      ),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    return await _handleResponse(
+        response, () => uploadFile(endpoint, file, requireAuth: requireAuth));
   }
 
   // --- helpers ---
