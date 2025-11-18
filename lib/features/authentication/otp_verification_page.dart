@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/features/authentication/password_reset_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,6 +23,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
   // Estado para armazenar o código completo
   String _enteredOtp = '';
+
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -61,31 +65,63 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   }
 
   void _verifyOtp() async {
-    if (_enteredOtp.length == _otpLength) {
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text("Verificação de Código"),
-          content: Text(
-              "O código $_enteredOtp foi verificado. Você pode redefinir sua senha! (Mock)"),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text("OK"),
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.resetPassword,
-                  arguments: {
-                    'cpf': widget.cpf,
-                    'otpCode': _enteredOtp,
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      );
+    if (_enteredOtp.length != _otpLength || _isLoading) return;
+
+    // Remove o foco para garantir que o teclado desapareça
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    try {
+      // 1. Chama o Repositório para verificar o OTP no backend
+      await _authRepository.verifyOtp(
+          widget.cpf, // CPF que veio da rota anterior
+          _enteredOtp // Código OTP digitado
+          );
+
+      // 2. Se a chamada for bem-sucedida (status 200), navega para a redefinição de senha
+      if (mounted) {
+        final arguments = {
+          'cpf': widget.cpf,
+          'otpCode': _enteredOtp, // Passa o OTP validado para a próxima etapa
+        };
+
+        // Sucesso: Navega para a PasswordResetPage
+        Navigator.pushNamed(
+          context,
+          AppRoutes.resetPassword,
+          arguments: arguments,
+        );
+      }
+    } catch (e) {
+      // 3. Trata Erro (Ex: Código inválido ou expirado - 401/400)
+      if (mounted) {
+        String errorMessage = e.toString().contains("Exception:")
+            ? e.toString().split("Exception:")[1].trim()
+            : "Erro de comunicação. O código pode ter expirado.";
+
+        _showAlert("Falha na Verificação", errorMessage);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _showAlert(String title, String content) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -163,17 +199,21 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 height: 56,
                 child: CupertinoButton(
                   color: primaryColor,
-                  // Desabilita se o código não estiver completo
-                  onPressed:
-                      _enteredOtp.length == _otpLength ? _verifyOtp : null,
+                  // Desabilita se o código não estiver completo OU estiver carregando
+                  onPressed: (_enteredOtp.length == _otpLength && !_isLoading)
+                      ? _verifyOtp
+                      : null,
                   borderRadius: BorderRadius.circular(14),
-                  child: Text(
-                    "Verificar",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: isDark ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const CupertinoActivityIndicator(
+                          color: CupertinoColors.white)
+                      : Text(
+                          "Verificar",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: isDark ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),

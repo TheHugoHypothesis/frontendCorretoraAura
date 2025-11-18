@@ -112,6 +112,7 @@ class AuthenticationRepository {
     await _apiClient.post(
       Endpoints.authVerifyOtp,
       {'cpf': cpf, 'otp_code': otpCode},
+      isAuthFlowRoute: true,
     );
   }
 
@@ -125,6 +126,7 @@ class AuthenticationRepository {
         'otp_code': otpCode,
         'new_password': newPassword,
       },
+      isAuthFlowRoute: true,
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/features/authentication/otp_verification_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
@@ -70,31 +71,60 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
-  void _requestOtp() {
+  bool _isLoading = false;
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+
+  void _requestOtp() async {
+    if (_isLoading) return;
+
     final rawCpf = cpfMaskFormatter.getUnmaskedText();
 
     if (rawCpf.length == 11) {
-      Navigator.pushNamed(
-        context,
-        AppRoutes.otpVerification,
-        arguments: rawCpf,
-      );
+      setState(() => _isLoading = true);
+
+      try {
+        await _authRepository.requestOtp(rawCpf);
+
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            AppRoutes.otpVerification,
+            arguments: rawCpf,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          String errorMessage = e.toString().contains("Exception:")
+              ? e.toString().split("Exception:")[1].trim()
+              : "Não foi possível solicitar o código. Verifique sua conexão.";
+
+          _showAlert("Falha na Solicitação", errorMessage);
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     } else {
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: const Text("CPF Inválido"),
-          content:
-              const Text("Por favor, insira um CPF completo para continuar."),
-          actions: [
-            CupertinoDialogAction(
-              child: const Text("OK"),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      );
+      _showAlert(
+          "CPF Inválido", "Por favor, insira um CPF completo para continuar.");
     }
+  }
+
+  void _showAlert(String title, String content) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -160,15 +190,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 height: 56,
                 child: CupertinoButton(
                   color: primaryColor,
-                  onPressed: _requestOtp,
+                  onPressed: _isLoading ? null : _requestOtp,
                   borderRadius: BorderRadius.circular(14),
-                  child: Text(
-                    "Solicitar Código",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: isDark ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const CupertinoActivityIndicator(color: Colors.white)
+                      : Text(
+                          "Solicitar Código",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: isDark ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),

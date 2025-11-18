@@ -17,7 +17,9 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body,
-      {bool requireAuth = false, bool isLoginRoute = false}) async {
+      {bool requireAuth = false,
+      bool isLoginRoute = false,
+      bool isAuthFlowRoute = false}) async {
     final url = Uri.parse('$baseUrl$endpoint');
     final headers = await _buildHeaders(requireAuth);
 
@@ -31,8 +33,11 @@ class ApiClient {
     return await _handleResponse(
         response,
         () => post(endpoint, body,
-            requireAuth: requireAuth, isLoginRoute: isLoginRoute),
-        isLoginRoute: isLoginRoute);
+            requireAuth: requireAuth,
+            isLoginRoute: isLoginRoute,
+            isAuthFlowRoute: isAuthFlowRoute),
+        isLoginRoute: isLoginRoute,
+        isAuthFlowRoute: isAuthFlowRoute);
   }
 
   Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body,
@@ -95,7 +100,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> _handleResponse(
       http.Response response, Future<Map<String, dynamic>> Function() retryFn,
-      {bool isLoginRoute = false}) async {
+      {bool isLoginRoute = false, bool isAuthFlowRoute = false}) async {
     print('--- INÍCIO LOG RESPOSTA ---');
     print('<<< ENDPOINT: ${response.request!.url.path}');
     print('<<< STATUS CODE: ${response.statusCode}');
@@ -103,12 +108,16 @@ class ApiClient {
     print('----------------------------');
 
     if (response.statusCode == 401) {
-      if (isLoginRoute) {
-        throw Exception('Credenciais inválidas. Verifique CPF e senha.');
+      if (isLoginRoute || isAuthFlowRoute) {
+        // Lança a exceção de credencial inválida, quebrando o loop.
+        throw Exception('Credencial ou código inválido. Tente novamente.');
       }
 
       final refreshed = await TokenManager.refreshAccessToken();
-      if (refreshed) return await retryFn();
+      if (refreshed) {
+        return await retryFn();
+      }
+
       throw Exception('Sessão expirada. Faça login novamente.');
     }
 

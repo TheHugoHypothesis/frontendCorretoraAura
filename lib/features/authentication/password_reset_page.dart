@@ -1,13 +1,9 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// ⚠️ IMPORTANTE: O widget auxiliar _buildTextField deve ser acessível.
-// Se ele estiver em outro arquivo (ex: lib/widgets/common_text_field.dart), importe-o.
-
-// ----------------------------------------------------------------------
-//                       WIDGET AUXILIAR (Repetido para Funcionalidade)
-// ----------------------------------------------------------------------
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -83,10 +79,17 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
   bool _isNewPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  void _resetPassword() {
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+  bool _isLoading = false;
+
+  void _resetPassword() async {
+    // ⬅️ Tornar Assíncrono
+    if (_isLoading) return;
+
     final newPassword = _newPasswordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
+    // --- Validações ---
     if (newPassword.isEmpty || confirmPassword.isEmpty) {
       _showAlert("Erro", "Por favor, preencha ambos os campos de senha.");
       return;
@@ -100,19 +103,38 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
       return;
     }
 
-    final resetData = {
-      'cpf': widget.userCpf, // Identificador
-      'otp_code': widget.otpCode, // Chave de segurança
-      'new_password': newPassword, // Nova senha
-    };
+    setState(() => _isLoading = true);
 
-    print("ENVIANDO DADOS DE RESET PARA O BACKEND: $resetData");
+    try {
+      await _authRepository.resetPassword(
+        widget.userCpf,
+        widget.otpCode,
+        newPassword,
+      );
 
-    _showAlert(
-      "Sucesso!",
-      "Sua senha foi redefinida. Você pode fazer login.",
-      onConfirm: () => Navigator.of(context).popUntil((route) => route.isFirst),
-    );
+      if (mounted) {
+        _showAlert(
+          "Sucesso!",
+          "Sua senha foi redefinida. Você pode fazer login.",
+          onConfirm: () => Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.login,
+            (route) => false,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = e.toString().contains("Exception:")
+            ? e.toString().split("Exception:")[1].trim()
+            : "Erro de comunicação com o servidor.";
+
+        _showAlert("Falha no Reset", errorMessage);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _showAlert(String title, String content, {VoidCallback? onConfirm}) {
@@ -230,15 +252,17 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                 height: 56,
                 child: CupertinoButton(
                   color: primaryColor,
-                  onPressed: _resetPassword,
+                  onPressed: _isLoading ? null : _resetPassword,
                   borderRadius: BorderRadius.circular(14),
-                  child: Text(
-                    "Redefinir Senha",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: isDark ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const CupertinoActivityIndicator(color: Colors.white)
+                      : Text(
+                          "Redefinir Senha",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: isDark ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 32),
