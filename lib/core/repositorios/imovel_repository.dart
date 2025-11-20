@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
+
 import '../api/api_client.dart';
 import '../api/endpoints.dart';
-
 import '../../data/models/imovel_model.dart';
 
 class ImovelRepository {
@@ -69,5 +70,28 @@ class ImovelRepository {
       // Caso a API retorne algo que não é uma lista (ex: Map vazio por erro)
       return [];
     }
+  }
+
+  Future<Map<String, dynamic>> registerImovel(
+      Map<String, dynamic> imovelData) async {
+    final responseData = await _apiClient.post(
+      Endpoints.imoveisRegister,
+      imovelData,
+      requireAuth: true,
+    );
+    return responseData;
+  }
+
+  Future<Map<String, dynamic>> uploadImovelFotos(
+      String matricula, List<File> fotos) async {
+    final responseData = await _apiClient.uploadMultipleFiles(
+      Endpoints.imoveisUploadFotos,
+      'fotos',
+      matricula,
+      fotos,
+      requireAuth: true,
+    );
+
+    return responseData;
   }
 }

@@ -99,6 +99,33 @@ class ApiClient {
         response, () => uploadFile(endpoint, file, requireAuth: requireAuth));
   }
 
+  Future<Map<String, dynamic>> uploadMultipleFiles(
+      String endpoint, String fieldName, String matricula, List<File> files,
+      {bool requireAuth = true}) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    final request = http.MultipartRequest('POST', url);
+
+    final headers = await _buildHeaders(requireAuth);
+    request.headers.addAll(headers);
+
+    request.fields['matricula'] = matricula;
+
+    for (var file in files) {
+      request.files.add(await http.MultipartFile.fromPath(
+        fieldName,
+        file.path,
+      ));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    return await _handleResponse(
+        response,
+        () => uploadMultipleFiles(endpoint, fieldName, matricula, files,
+            requireAuth: requireAuth));
+  }
+
   // --- helpers ---
 
   Future<Map<String, String>> _buildHeaders(bool requireAuth) async {

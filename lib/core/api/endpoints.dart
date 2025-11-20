@@ -13,7 +13,8 @@ class Endpoints {
 
   // Rotas de Gestão de Imóveis (CRUD)
   static const String imoveisList = '/imoveis';
-  static const String imoveisRegister = '/imoveis/register';
+  static const String imoveisRegister = '/imoveis/cadastro';
+  static const String imoveisUploadFotos = '/imoveis/upload_fotos';
   static const String imoveisGetDetail = '/imoveis/';
   static const String imoveisUpdate = '/imoveis/update';
   static const String imoveisFilters = '/imoveis/filtro';

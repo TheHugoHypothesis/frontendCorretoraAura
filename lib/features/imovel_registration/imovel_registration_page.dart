@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:aura_frontend/features/imovel_registration/map_location_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'dart:io'; // Para o tipo File
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:aura_frontend/core/repositorios/imovel_repository.dart';
 
 import 'package:aura_frontend/data/models/selected_location_model.dart';
 import '../../utils/uppercase_text_formatter.dart';
@@ -23,11 +25,8 @@ Widget _buildTextField({
   bool obscureText = false,
   TextInputType keyboardType = TextInputType.text,
   List<TextInputFormatter>? inputFormatters,
-  // 💡 NOVO PARÂMETRO: Sufixo de texto opcional
   String? suffixText,
 }) {
-  // Implementação omitida por brevidade, mas deve ser a mesma das telas anteriores.
-  // ... (Sua implementação do _buildTextField) ...
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
@@ -76,7 +75,6 @@ Widget _buildTextField({
   );
 }
 
-// --- NOVO WIDGET AUXILIAR: Tile de Opção com Switch (Apple Like) ---
 Widget _buildOptionTile({
   required ThemeData theme,
   required String title,
@@ -132,7 +130,6 @@ Widget _buildOptionTile({
     ),
   );
 }
-// --- FIM DOS WIDGETS AUXILIARES ---
 
 class PropertyRegistrationPage extends StatefulWidget {
   const PropertyRegistrationPage({super.key});
@@ -152,8 +149,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     leftSymbol: 'R\$ ', // Símbolo do Real
     precision: 2, // Duas casas decimais
   );
-  // final TextEditingController _numReformasController = TextEditingController();
-  // final TextEditingController _numQuartosController = TextEditingController();
   final TextEditingController _metragemController = TextEditingController();
 
   int _numQuartos = 1;
@@ -166,6 +161,8 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
   final TextEditingController _complementoController = TextEditingController();
   final TextEditingController _cidadeController = TextEditingController();
   final TextEditingController _bairroController = TextEditingController();
+  final TextEditingController _cpfProprietarioController =
+      TextEditingController();
 
   // Seletores (Cupertino-style)
   String? _tipoImovel; // Casa, Apartamento, Sala Comercial, etc.
@@ -180,14 +177,25 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
   bool _hasSalaoFestas = false;
   bool _hasAcademia = false;
 
+  final ImovelRepository _imovelRepository = ImovelRepository();
+  bool _isLoading = false;
+
   List<File> _propertyImages = [];
   final ImagePicker _picker = ImagePicker();
 
   // Formatadores
   final cepMaskFormatter = MaskTextInputFormatter(
-      mask: '#####-###',
-      filter: {"#": RegExp(r'[0-9]')},
-      type: MaskAutoCompletionType.lazy);
+    mask: '#####-###',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
+  final MaskTextInputFormatter _cpfProprietarioFormatter =
+      MaskTextInputFormatter(
+    mask: '###.###.###-##',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
 
   final List<TextInputFormatter> metragemFormatter = [
     FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
@@ -232,19 +240,14 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     );
 
     if (result != null) {
-      // PREENCHE TODOS OS CAMPOS DE ENDEREÇO
       setState(() {
         _cepController.text = result.cep;
         _logradouroController.text = result.logradouro;
 
-        // ADICIONAR ESTAS DUAS LINHAS:
         _cidadeController.text = result.cidade;
         _bairroController.text = result.bairro;
-
-        // O 'Número' e 'Complemento' são mantidos para preenchimento manual.
       });
 
-      // Opcional: Feedback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -255,28 +258,106 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     }
   }
 
-  void _handlePropertyRegistration() {
-    // TODO: Implementar a lógica de envio de dados do imóvel
-    // Validação, chamada de API, etc.
-
-    // Simulação de sucesso
+  void _showAlert(String title, String content) {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text("Imóvel Cadastrado"),
-        content: const Text(
-            "O novo imóvel foi registrado na corretora com sucesso!"),
+        title: Text(title),
+        content: Text(content),
         actions: [
           CupertinoDialogAction(
             child: const Text("OK"),
-            onPressed: () => Navigator.pop(context), // Fecha o alerta
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
     );
   }
 
-  // Seletor Cupertino para Tipo/Finalidade
+  void _handlePropertyRegistration() async {
+    if (_isLoading) return;
+
+    final String cpfProprietarioLimpo =
+        _cpfProprietarioFormatter.getUnmaskedText();
+
+    if (_matriculaController.text.isEmpty ||
+        _logradouroController.text.isEmpty ||
+        _cepController.text.isEmpty ||
+        _tipoImovel == null ||
+        _finalidade == null ||
+        cpfProprietarioLimpo.length != 11) {
+      _showAlert("Dados Incompletos",
+          "Preencha os campos obrigatórios (Matrícula, Endereço, Tipo, Finalidade).");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    List<String> comodidadesAtivas = [];
+    if (_hasPiscina) comodidadesAtivas.add("Piscina");
+    if (_hasSalaoFestas) comodidadesAtivas.add("Salao_De_Festas");
+    if (_hasAcademia) comodidadesAtivas.add("Academia");
+
+    final imovelData = {
+      'matricula': _matriculaController.text.trim(),
+      'valor_venal': _valorVenalController.numberValue,
+      'metragem':
+          double.tryParse(_metragemController.text.replaceAll(',', '.')) ?? 0.0,
+      'n_quartos': _numQuartos,
+      'n_reformas': _numReformas,
+      'tipo': _tipoImovel,
+      'finalidade': _finalidade,
+      'possui_garagem': _possuiGaragem,
+      'mobiliado': _isMobiliado,
+      'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      'logradouro': _logradouroController.text.trim(),
+      'numero': _numeroController.text.trim(),
+      'complemento': _complementoController.text.trim(),
+      'bairro': _bairroController.text.trim(),
+      'cidade': _cidadeController.text.trim(),
+      'comodidades': comodidadesAtivas.join(','),
+      'cpf_prop': cpfProprietarioLimpo
+    };
+
+    try {
+      await _imovelRepository.registerImovel(imovelData);
+
+      if (_propertyImages.isNotEmpty) {
+        await _imovelRepository.uploadImovelFotos(
+            _matriculaController.text.trim(), _propertyImages);
+      }
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Sucesso"),
+            content: const Text("Imóvel e imagens cadastrados com sucesso!"),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.pop(context); // Fecha alerta
+                  Navigator.pop(context); // Volta para a tela anterior (Home)
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        String errorMsg = e.toString().contains("Exception:")
+            ? e.toString().split("Exception:")[1].trim()
+            : "Erro ao cadastrar imóvel.";
+        _showAlert("Erro", errorMsg);
+      }
+    }
+  }
+
   void _showCupertinoPicker({
     required List<String> options,
     required String title,
@@ -285,7 +366,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext builder) {
-        // Valor inicial para o picker
         String initialValue = options.first;
 
         return Container(
@@ -293,7 +373,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
           color: CupertinoColors.white,
           child: Column(
             children: [
-              // Header do Picker (com botão Done)
               Container(
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 16),
@@ -435,8 +514,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                 width: 0.0,
               ),
             ),
-            // Não precisa de leading se for a tela raiz após o login.
-            // Se for um modal, você pode adicionar um 'X' aqui.
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -478,6 +555,17 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                     primaryColor: primaryColor,
                   ),
 
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _cpfProprietarioController,
+                    hintText: "CPF do Proprietário",
+                    icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_cpfProprietarioFormatter],
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
                   const SizedBox(height: 30),
 
                   // --- SEÇÃO 2: CARACTERÍSTICAS BÁSICAS ---
@@ -661,7 +749,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                           icon: CupertinoIcons.placemark_fill,
                           theme: theme, fieldColor: fieldColor,
                           primaryColor: primaryColor,
-                          // REMOVIDO: enabled: false
                         ),
                       ),
                     ],
@@ -727,15 +814,20 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                     height: 56,
                     child: CupertinoButton(
                       color: primaryColor,
-                      onPressed: _handlePropertyRegistration,
+                      // Desabilita se estiver carregando
+                      onPressed:
+                          _isLoading ? null : _handlePropertyRegistration,
                       borderRadius: BorderRadius.circular(14),
-                      child: Text(
-                        "Registrar Imóvel",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: backgroundColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CupertinoActivityIndicator(
+                              color: Colors.white)
+                          : Text(
+                              "Registrar Imóvel",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: backgroundColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 32),
