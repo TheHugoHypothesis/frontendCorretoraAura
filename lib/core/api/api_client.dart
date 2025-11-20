@@ -6,14 +6,26 @@ import 'dart:io';
 class ApiClient {
   static const String baseUrl = 'http://127.0.0.1:8000';
 
-  Future<Map<String, dynamic>> get(String endpoint,
-      {bool requireAuth = false}) async {
-    final url = Uri.parse('$baseUrl$endpoint');
+  Future<dynamic> get(String endpoint,
+      {bool requireAuth = false, Map<String, dynamic>? queryParams}) async {
+    Uri url = Uri.parse('$baseUrl$endpoint');
+
+    if (queryParams != null && queryParams.isNotEmpty) {
+      final stringParams =
+          queryParams.map((key, value) => MapEntry(key, value.toString()));
+
+      url = url.replace(queryParameters: stringParams);
+    }
+
     final headers = await _buildHeaders(requireAuth);
+
+    print('>>> REQ GET: $url');
 
     final response = await http.get(url, headers: headers);
     return await _handleResponse(
-        response, () => get(endpoint, requireAuth: requireAuth));
+        response,
+        () =>
+            get(endpoint, requireAuth: requireAuth, queryParams: queryParams));
   }
 
   Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> body,
@@ -98,8 +110,8 @@ class ApiClient {
     return headers;
   }
 
-  Future<Map<String, dynamic>> _handleResponse(
-      http.Response response, Future<Map<String, dynamic>> Function() retryFn,
+  Future<dynamic> _handleResponse(
+      http.Response response, Future<dynamic> Function() retryFn,
       {bool isLoginRoute = false, bool isAuthFlowRoute = false}) async {
     print('--- INÍCIO LOG RESPOSTA ---');
     print('<<< ENDPOINT: ${response.request!.url.path}');
@@ -108,8 +120,11 @@ class ApiClient {
     print('----------------------------');
 
     if (response.statusCode == 401) {
-      if (isLoginRoute || isAuthFlowRoute) {
-        // Lança a exceção de credencial inválida, quebrando o loop.
+      if (isLoginRoute) {
+        throw Exception('Credenciais inválidas. Verifique CPF e senha.');
+      }
+
+      if (isAuthFlowRoute) {
         throw Exception('Credencial ou código inválido. Tente novamente.');
       }
 
@@ -133,10 +148,14 @@ class ApiClient {
         if (response.body.isNotEmpty) {
           final errorData = json.decode(response.body);
 
-          if (errorData.containsKey('message')) {
-            specificMessage = errorData['message'].toString();
-          } else if (errorData.containsKey('error')) {
-            specificMessage = errorData['error'].toString();
+          if (errorData is Map) {
+            if (errorData.containsKey('message')) {
+              specificMessage = errorData['message'].toString();
+            } else if (errorData.containsKey('error')) {
+              specificMessage = errorData['error'].toString();
+            } else {
+              specificMessage = response.body;
+            }
           } else {
             specificMessage = response.body;
           }

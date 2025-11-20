@@ -1,10 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart'; // Para CEP e CPF
 import 'package:flutter/services.dart';
-
-// Página: filter_imovel.dart
-// Descrição: Página Apple-like para seleção de filtros de imóveis.
-// Retorna um Map<String, dynamic> com os filtros selecionados via Navigator.pop(context, filtersMap)
 
 class FilterImovelPage extends StatefulWidget {
   const FilterImovelPage({super.key});
@@ -13,16 +10,42 @@ class FilterImovelPage extends StatefulWidget {
   State<FilterImovelPage> createState() => _FilterImovelPageState();
 }
 
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
+
 class _FilterImovelPageState extends State<FilterImovelPage> {
-  // CONTROLLERS DE ENDEREÇO
-  final TextEditingController _estadoController = TextEditingController();
+// --- CONTROLLERS DE ENDEREÇO E FILTROS ---
+  final TextEditingController _cepController =
+      TextEditingController(); // NOVO: CEP
   final TextEditingController _cidadeController = TextEditingController();
   final TextEditingController _bairroController = TextEditingController();
-  final TextEditingController _ruaController = TextEditingController();
+  final TextEditingController _logradouroController =
+      TextEditingController(); // RENOMEADO: Logradouro
+  final TextEditingController _proprietarioCpfController =
+      TextEditingController(); // NOVO: CPF Proprietário
+  final TextEditingController _matriculaController =
+      TextEditingController(); // NOVO: Matrícula
 
   // METRAGEM
   final TextEditingController _metragemMinController = TextEditingController();
   final TextEditingController _metragemMaxController = TextEditingController();
+  final TextEditingController _numReformasController = TextEditingController(
+      text: '0'); // NOVO: Reformas (Texto para visualização)
+
+  // FORMATADORES
+  final MaskTextInputFormatter _cepFormatter = MaskTextInputFormatter(
+      mask: '#####-###', filter: {"#": RegExp(r'[0-9]')});
+  final MaskTextInputFormatter _cpfFormatter = MaskTextInputFormatter(
+      mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
+  final UpperCaseTextFormatter _matriculaFormatter = UpperCaseTextFormatter();
 
   // VALOR (RANGE)
   RangeValues _valorRange = const RangeValues(100000, 1000000);
@@ -45,6 +68,7 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
 
   // QUARTOS
   int _numQuartos = 1;
+  int _numReformas = 0;
 
   // SWITCHES
   bool _possuiGaragem = false;
@@ -61,10 +85,99 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
     'Elevador': false,
     'Aceita Pet': false,
     'Ar Condicionado': false,
-    'Varanda/Sacada': false,
+    'Varanda': false,
   };
 
-  // THEME-DEPENDENT COLORS (calculados no build)
+  final List<String> _bairrosSP = [
+    'Alto de Pinheiros',
+    'Aricanduva',
+    'Bela Vista',
+    'Brás',
+    'Butantã',
+    'Campo Belo',
+    'Cerqueira César',
+    'Faria Lima',
+    'Ibirapuera',
+    'Itaim Bibi',
+    'Jardim Paulista',
+    'Lapa',
+    'Liberdade',
+    'Mooca',
+    'Moema',
+    'Morumbi',
+    'Paraíso',
+    'Pinheiros',
+    'Saúde',
+    'Sé',
+    'Tatuapé',
+    'Vila Madalena',
+    'Vila Olímpia',
+    'Vila Prudente',
+    'Outro'
+  ]..sort();
+  String? _bairroSelecionado;
+
+  @override
+  void dispose() {
+    _cepController.dispose();
+    _cidadeController.dispose();
+    _bairroController.dispose();
+    _logradouroController.dispose();
+    _proprietarioCpfController.dispose();
+    _matriculaController.dispose();
+    _metragemMinController.dispose();
+    _metragemMaxController.dispose();
+    _numReformasController.dispose();
+    super.dispose();
+  }
+
+  void _applyFilters() {
+    final filters = <String, dynamic>{
+      'valorMin': _valorRange.start.toInt(),
+      'valorMax': _valorRange.end.toInt(),
+      'cep': _cepController.text.trim(),
+      'cidade': _cidadeController.text.trim(),
+      'bairroSelecionado': _bairroSelecionado,
+      'logradouro': _logradouroController.text.trim(),
+      'proprietarioCpf':
+          _cpfFormatter.unmaskText(_proprietarioCpfController.text),
+      'matricula': _matriculaController.text.trim(),
+      'metragemMin': int.tryParse(
+          _metragemMinController.text.replaceAll(RegExp(r'[^0-9]'), '')),
+      'metragemMax': int.tryParse(
+          _metragemMaxController.text.replaceAll(RegExp(r'[^0-9]'), '')),
+      'numQuartos': _numQuartos,
+      'numReformas': _numReformas,
+      'tipo': _tipoSelecionado,
+      'finalidade': _finalidadeSelecionada,
+      'possuiGaragem': _possuiGaragem,
+      'mobiliado': _isMobiliado,
+      'comodidades': Map<String, bool>.from(_comodidades),
+    };
+
+    Navigator.of(context).pop(filters);
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _cepController.clear();
+      _cidadeController.clear();
+      _bairroController.clear();
+      _logradouroController.clear();
+      _proprietarioCpfController.clear();
+      _matriculaController.clear();
+      _metragemMinController.clear();
+      _metragemMaxController.clear();
+      _valorRange = const RangeValues(100000, 1000000);
+      _tipoSelecionado = null;
+      _finalidadeSelecionada = null;
+      _numQuartos = 1;
+      _numReformas = 0;
+      _possuiGaragem = false;
+      _isMobiliado = false;
+      _comodidades.updateAll((key, value) => false);
+    });
+  }
 
   // FUNÇÃO PARA ABRIR PICKER (USADO PARA TIPO / FINALIDADE)
   void _showCupertinoPicker({
@@ -112,52 +225,6 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
         );
       },
     );
-  }
-
-  // Retorna o Map com filtros selecionados
-  void _applyFilters() {
-    final filters = <String, dynamic>{
-      'valorMin': _valorRange.start.toInt(),
-      'valorMax': _valorRange.end.toInt(),
-      'estado': _estadoController.text.trim(),
-      'cidade': _cidadeController.text.trim(),
-      'bairro': _bairroController.text.trim(),
-      'rua': _ruaController.text.trim(),
-      'metragemMin': _metragemMinController.text.trim().isEmpty
-          ? null
-          : int.tryParse(
-              _metragemMinController.text.replaceAll(RegExp(r'[^0-9]'), '')),
-      'metragemMax': _metragemMaxController.text.trim().isEmpty
-          ? null
-          : int.tryParse(
-              _metragemMaxController.text.replaceAll(RegExp(r'[^0-9]'), '')),
-      'tipo': _tipoSelecionado,
-      'finalidade': _finalidadeSelecionada,
-      'numQuartos': _numQuartos,
-      'possuiGaragem': _possuiGaragem,
-      'mobiliado': _isMobiliado,
-      'comodidades': Map<String, bool>.from(_comodidades),
-    };
-
-    Navigator.of(context).pop(filters);
-  }
-
-  void _clearFilters() {
-    setState(() {
-      _estadoController.clear();
-      _cidadeController.clear();
-      _bairroController.clear();
-      _ruaController.clear();
-      _metragemMinController.clear();
-      _metragemMaxController.clear();
-      _valorRange = const RangeValues(100000, 1000000);
-      _tipoSelecionado = null;
-      _finalidadeSelecionada = null;
-      _numQuartos = 1;
-      _possuiGaragem = false;
-      _isMobiliado = false;
-      _comodidades.updateAll((key, value) => false);
-    });
   }
 
   @override
@@ -264,16 +331,19 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                   _buildSectionHeader(theme, 'Localização'),
                   const SizedBox(height: 12),
 
-                  // Estado / Cidade / Bairro / Rua
+                  // CEP (Novo)
                   _buildTextField(
-                    controller: _estadoController,
-                    hintText: 'Estado',
-                    icon: CupertinoIcons.location,
+                    controller: _cepController,
+                    hintText: 'CEP',
+                    icon: CupertinoIcons.barcode,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_cepFormatter],
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
+                  // Cidade
                   _buildTextField(
                     controller: _cidadeController,
                     hintText: 'Cidade',
@@ -283,18 +353,26 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _bairroController,
-                    hintText: 'Bairro',
-                    icon: CupertinoIcons.placemark_fill,
+                  // Bairro
+                  _buildPickerSelector(
                     theme: theme,
-                    fieldColor: fieldColor,
-                    primaryColor: primaryColor,
+                    title: 'Bairro',
+                    value: _bairroSelecionado ?? '',
+                    icon: CupertinoIcons.placemark_fill,
+                    onTap: () {
+                      _showCupertinoPicker(
+                        options: _bairrosSP,
+                        title: 'Bairros de São Paulo',
+                        onSelectedItemChanged: (value) =>
+                            setState(() => _bairroSelecionado = value),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
+                  // Logradouro (Antiga Rua)
                   _buildTextField(
-                    controller: _ruaController,
-                    hintText: 'Rua',
+                    controller: _logradouroController,
+                    hintText: 'Logradouro',
                     icon: CupertinoIcons.map_pin_ellipse,
                     theme: theme,
                     fieldColor: fieldColor,
@@ -302,6 +380,37 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                   ),
 
                   const SizedBox(height: 24),
+
+                  // FILTRO CPF PROPRIETÁRIO
+                  _buildSectionHeader(theme, 'Proprietário (Filtro)'),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _proprietarioCpfController,
+                    hintText: 'CPF do Proprietário',
+                    icon: CupertinoIcons.person_crop_circle_fill,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [_cpfFormatter],
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionHeader(theme, 'Identificação do Imóvel'),
+                  const SizedBox(height: 12),
+
+                  // MATRÍCULA
+                  _buildTextField(
+                    controller: _matriculaController,
+                    hintText: 'Matrícula',
+                    icon: CupertinoIcons.doc_text_fill,
+                    inputFormatters: [_matriculaFormatter],
+                    theme: theme,
+                    fieldColor: fieldColor,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 12),
 
                   _buildSectionHeader(theme, 'Metragem (Área útil)'),
                   const SizedBox(height: 12),
@@ -391,6 +500,19 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                     onChanged: (newVal) => setState(() => _numQuartos = newVal),
                     minimum: 0,
                     icon: CupertinoIcons.bed_double,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // NÚMERO DE REFORMAS (STEPPER)
+                  _buildStepperField(
+                    theme: theme,
+                    title: 'Número de Reformas',
+                    value: _numReformas,
+                    onChanged: (newVal) =>
+                        setState(() => _numReformas = newVal.toInt()),
+                    minimum: 0,
+                    icon: CupertinoIcons.hammer_fill,
                   ),
 
                   const SizedBox(height: 24),

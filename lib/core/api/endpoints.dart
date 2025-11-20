@@ -16,7 +16,7 @@ class Endpoints {
   static const String imoveisRegister = '/imoveis/register';
   static const String imoveisGetDetail = '/imoveis/';
   static const String imoveisUpdate = '/imoveis/update';
-  static const String imoveisSearch = '/imoveis/search';
+  static const String imoveisFilters = '/imoveis/filtro';
 
   // Rotas de Proprietários
   static const String proprietariosList = '/proprietarios';

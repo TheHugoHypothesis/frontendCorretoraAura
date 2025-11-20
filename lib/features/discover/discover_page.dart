@@ -1,3 +1,5 @@
+import 'package:aura_frontend/core/repositorios/imovel_repository.dart';
+import 'package:aura_frontend/data/models/imovel_model.dart';
 import 'package:aura_frontend/features/home/propriety_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -5,8 +7,47 @@ import 'package:flutter/material.dart';
 import '../../widgets/notifications_modal.dart';
 import '../../routes/app_routes.dart';
 
-class DiscoverPage extends StatelessWidget {
+class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
+
+  @override
+  State<DiscoverPage> createState() => _DiscoverPageState();
+}
+
+class _DiscoverPageState extends State<DiscoverPage> {
+  final ImovelRepository _imovelRepository = ImovelRepository();
+
+  List<ImovelModel> _imoveisList = [];
+  bool _isLoading = false;
+  bool _hasLoadedInitial = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Future<void> _fetchImoveis(Map<String, dynamic> filters) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final resultados = await _imovelRepository.filtrarImoveis(filters);
+
+      if (mounted) {
+        setState(() {
+          _imoveisList = resultados;
+          _isLoading = false;
+          _hasLoadedInitial = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erro ao buscar: $e")),
+        );
+      }
+    }
+  }
 
   void _showNotificationsModal(BuildContext context) {
     showModalBottomSheet(
@@ -21,22 +62,20 @@ class DiscoverPage extends StatelessWidget {
     );
   }
 
-  // 1. Navegação para Cadastro de Imóvel (Usando Rota Nomeada)
   void _navigateToPropertyRegistration(BuildContext context) {
-    // Rota: /imovel/cadastro
     Navigator.pushNamed(context, AppRoutes.propertyRegistration);
   }
 
-  // 2. Navegação para Filtros (Usando Rota Nomeada e aguardando resultado)
-  void _navigateToFilterPage(BuildContext context) async {
+  void _navigateToFilterPage() async {
     final selectedFilters = await Navigator.pushNamed(
       context,
-      AppRoutes.filters, // Rota: /imovel/filtros
+      AppRoutes.filters,
     );
 
-    if (selectedFilters != null) {
-      print("Filtros Recebidos para Aplicação: $selectedFilters");
-      // TODO: Aplicar filtros à lista de imóveis aqui
+    // Se retornou filtros (usuário clicou em Aplicar), faz a busca
+    if (selectedFilters != null && selectedFilters is Map<String, dynamic>) {
+      print("Filtros Recebidos: $selectedFilters");
+      _fetchImoveis(selectedFilters);
     }
   }
 
@@ -160,7 +199,7 @@ class DiscoverPage extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    onPressed: () => _navigateToFilterPage(context),
+                    onPressed: () => _navigateToFilterPage(),
                     icon: const Icon(CupertinoIcons.slider_horizontal_3),
                   ),
                 ),
@@ -190,7 +229,6 @@ class DiscoverPage extends StatelessWidget {
               ],
             ),
           ),
-
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -201,40 +239,46 @@ class DiscoverPage extends StatelessWidget {
                   topRight: Radius.circular(32),
                 ),
               ),
-              child: ListView(
-                children: [
-                  // Título principal
-                  Text(
-                    "Descubra\nlistagens modernas",
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+              child: _isLoading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _imoveisList.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.search,
+                                  size: 50, color: Colors.grey.shade400),
+                              const SizedBox(height: 10),
+                              Text(
+                                _hasLoadedInitial
+                                    ? "Nenhum imóvel encontrado com estes filtros."
+                                    : "Use o filtro para buscar imóveis.",
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _imoveisList.length,
+                          itemBuilder: (context, index) {
+                            final imovel = _imoveisList[index];
 
-                  // PROPERTY CARDS
-                  ...List.generate(
-                    3,
-                    (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: PropertyCard(
-                        // ⚠️ Substitua 'PropertyPage' por sua rota nomeada real
-                        onTap: () {
-                          // Navegação limpa para Detalhes, passando um ID/Argumento
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes
-                                .propertyDetails, // Rota para ImovelDetailPage
-                            arguments: 'ID_DO_IMOVEL_$index',
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: PropertyCard(
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.propertyDetails,
+                                    // Passa a URL da imagem ou um placeholder se for nulo
+                                    arguments: imovel.profileImageUrl ??
+                                        'assets/img1.jpg',
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
             ),
           ),
         ],
