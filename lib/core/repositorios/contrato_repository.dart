@@ -1,5 +1,6 @@
 import 'package:aura_frontend/core/api/api_client.dart';
 import 'package:aura_frontend/core/api/endpoints.dart';
+import 'package:aura_frontend/data/models/historico_pessoas_model.dart';
 import '../../data/models/contrato_model.dart';
 
 class ContratosRepository {
@@ -73,21 +74,24 @@ class ContratosRepository {
     return [];
   }
 
-  Future<List<dynamic>> getHistoricoPessoasImovel(String matricula) async {
-    final response = await _apiClient.get(
-      Endpoints.contratoPessoasImovel,
-      queryParams: {'matricula': matricula},
-      requireAuth: true,
-    );
-    return response is List ? response : [];
-  }
+  Future<List<HistoricoPessoasModel>> getHistoricoPessoasImovel(
+      String matricula) async {
+    try {
+      final response = await _apiClient.get(
+        Endpoints.contratoPessoasImovel,
+        queryParams: {'matricula': matricula},
+        requireAuth: true,
+      );
 
-  Future<List<dynamic>> getValoresImovel(String matricula) async {
-    final response = await _apiClient.get(
-      Endpoints.contratoValoresImovel,
-      queryParams: {'matricula': matricula},
-      requireAuth: true,
-    );
-    return response is List ? response : [];
+      if (response is List) {
+        return response
+            .map((json) =>
+                HistoricoPessoasModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception("Erro ao buscar histórico de pessoas: $e");
+    }
   }
 }

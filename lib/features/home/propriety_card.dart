@@ -1,31 +1,195 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:aura_frontend/data/models/imovel_model.dart';
 
 class PropertyCard extends StatelessWidget {
+  final ImovelModel imovel; // 1. Recebe os dados do imóvel
   final VoidCallback onTap;
-  // Se o card for dinâmico no futuro: final ImovelMock imovel;
 
-  const PropertyCard(
-      {required this.onTap,
-      super.key}); // Adicionar 'required this.imovel' se for dinâmico
+  const PropertyCard({
+    super.key,
+    required this.imovel,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Implementação mock (simulada) que estava no final da HomePage
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Cores do tema B&W
+    final backgroundColor = isDark ? Colors.grey.shade900 : Colors.white;
+    final primaryColor = isDark ? Colors.white : Colors.black;
+    final secondaryColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+
+    // Tag Hero única para animação suave ao abrir detalhes
+    final heroTag = 'property_img_${imovel.matricula}';
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 150,
         decoration: BoxDecoration(
-          color: Colors.blueGrey.shade100,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        padding: const EdgeInsets.all(16),
-        child: const Center(
-          child: Text("Property Card - Clique para Detalhes",
-              style: TextStyle(fontWeight: FontWeight.bold)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- 1. ÁREA DA IMAGEM ---
+            Stack(
+              children: [
+                Hero(
+                  tag: heroTag,
+                  child: ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9, // Proporção retangular padrão
+                      child: _buildPropertyImage(isDark),
+                    ),
+                  ),
+                ),
+
+                // Badge de Status (Venda/Aluguel)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      // Exibe a finalidade ou tipo (ex: "RESIDENCIAL")
+                      (imovel.finalidade ?? 'IMÓVEL').toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // --- 2. INFORMAÇÕES ---
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Preço
+                  Text(
+                    imovel.valorVenalFormatado, // Usa o getter do model
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Endereço (Logradouro)
+                  Row(
+                    children: [
+                      Icon(CupertinoIcons.location_solid,
+                          size: 14, color: secondaryColor),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          imovel.enderecoCompleto, // Usa o getter do model
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: secondaryColor),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Badges de Características (Quartos, Metragem)
+                  Row(
+                    children: [
+                      _buildInfoBadge(CupertinoIcons.bed_double_fill,
+                          "${imovel.numQuartos} Quartos", secondaryColor),
+                      const SizedBox(width: 16),
+                      _buildInfoBadge(CupertinoIcons.square_grid_2x2_fill,
+                          "${imovel.metragem} m²", secondaryColor),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  // Lógica para decidir qual imagem mostrar
+  Widget _buildPropertyImage(bool isDark) {
+    // 1. Se o model tem URL válida
+    if (imovel.profileImageUrl != null && imovel.profileImageUrl!.isNotEmpty) {
+      return Image.network(
+        imovel.profileImageUrl!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+            child: const Center(child: CupertinoActivityIndicator()),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          // Se falhar ao carregar a URL, mostra placeholder
+          return _buildPlaceholder(isDark);
+        },
+      );
+    }
+
+    // 2. Se não tem URL, mostra placeholder
+    return _buildPlaceholder(isDark);
+  }
+
+  Widget _buildPlaceholder(bool isDark) {
+    return Container(
+      color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+      child: Center(
+        child: Icon(CupertinoIcons.photo,
+            color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+            size: 40),
+      ),
+    );
+  }
+
+  Widget _buildInfoBadge(IconData icon, String text, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -303,7 +303,7 @@ class _ProprietarioDetailPageState extends State<ProprietarioDetailPage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        imovel.endereco,
+                        imovel.bairro,
                         style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold, color: primaryColor),
                       ),
@@ -325,7 +325,7 @@ class _ProprietarioDetailPageState extends State<ProprietarioDetailPage>
                   Text("Matrícula: ${imovel.matricula}",
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: Colors.grey.shade600)),
-                  Text("Valor Venal: ${imovel.valorVenal}",
+                  Text("Valor Venal: ${imovel.valorVenalFormatado}",
                       style: theme.textTheme.bodyMedium
                           ?.copyWith(color: primaryColor)),
                   const SizedBox(height: 8),

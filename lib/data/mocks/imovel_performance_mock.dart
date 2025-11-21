@@ -3,10 +3,23 @@ import 'package:aura_frontend/data/models/imovel_model.dart';
 
 final ImovelModel mockImovelPerformance = ImovelModel(
   matricula: 'IMV98765',
-  endereco:
-      'Rua da Performance, 400 - Dubai', // Endereço mockado para o exemplo
+  descricao: "",
+  cpfProprietario: "",
+  logradouro: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  cep: "",
+  metragem: 150.3,
+  numQuartos: 3,
+  numReformas: 2,
+  tipo: "",
+  finalidade: "",
+  possuiGaragem: true,
+  eMobiliado: false,
   statusOcupacao: 'Disponível',
-  valorVenal: 'R\$ 950.000,00',
+  valorVenalRaw: 950000,
   contratos: [
     ContratoModel(
         codigo: 0,

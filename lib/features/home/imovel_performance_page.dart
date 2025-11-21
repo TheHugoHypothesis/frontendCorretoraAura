@@ -120,7 +120,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
               style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
           ),
-          pw.Text('Imóvel: ${imovel.endereco}',
+          pw.Text('Imóvel: ${imovel.cep}',
               style: const pw.TextStyle(fontSize: 12)),
           pw.Text('Matrícula: ${imovel.matricula}',
               style: const pw.TextStyle(fontSize: 12)),
@@ -141,7 +141,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
           _buildPdfMetricsTable(
             metrics,
             imovel.statusOcupacao,
-            imovel.valorVenal,
+            imovel.valorVenalFormatado,
             primaryColor: PdfColors.black,
           ),
 
@@ -335,7 +335,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
                         child: _buildStatusTile(
                           theme: theme,
                           title: "Valor Venal",
-                          value: widget.imovel.valorVenal,
+                          value: widget.imovel.valorVenalFormatado,
                           color: Colors.blue.shade700,
                         ),
                       ),
@@ -347,7 +347,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
                   _buildProfileInfoTile(
                     theme: theme,
                     title: "Endereço",
-                    value: widget.imovel.endereco,
+                    value: widget.imovel.cep,
                     primaryColor: primaryColor,
                   ),
                   const Divider(color: Colors.grey, height: 1),

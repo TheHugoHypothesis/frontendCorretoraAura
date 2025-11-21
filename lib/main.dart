@@ -1,4 +1,5 @@
 import 'package:aura_frontend/data/models/corretor_model.dart';
+import 'package:aura_frontend/data/models/imovel_model.dart';
 import 'package:aura_frontend/features/adquirente_management/adquirente_list_page.dart';
 import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/authentication/onboarding_page.dart';
@@ -117,9 +118,9 @@ class MyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case AppRoutes.propertyDetails:
-            final imagePath = settings.arguments as String;
+            final imovelArgument = settings.arguments as ImovelModel;
             return CupertinoPageRoute(
-              builder: (context) => PropertyPage(image: imagePath),
+              builder: (context) => PropertyPage(imovel: imovelArgument),
             );
 
           case AppRoutes.otpVerification:

@@ -266,14 +266,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
                               child: PropertyCard(
+                                imovel: imovel,
                                 onTap: () {
                                   Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.propertyDetails,
-                                    // Passa a URL da imagem ou um placeholder se for nulo
-                                    arguments: imovel.profileImageUrl ??
-                                        'assets/img1.jpg',
-                                  );
+                                      context, AppRoutes.propertyDetails,
+                                      // Passa a URL ou ID para a tela de detalhes
+                                      arguments: imovel);
                                 },
                               ),
                             );

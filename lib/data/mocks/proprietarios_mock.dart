@@ -16,18 +16,46 @@ final ContratoModel mockContratoAtivo = ContratoModel(
     matriculaImovel: 'Apto. Alameda Santos');
 
 final ImovelModel mockImovel1 = ImovelModel(
-    matricula: '123456',
-    endereco: 'Av. Ibirapuera, 1000',
-    statusOcupacao: 'Alugado',
-    valorVenal: 'R\$ 600.000,00',
-    contratos: [mockContratoAtivo]);
+    matricula: 'IMV98765',
+    descricao: "",
+    cpfProprietario: "",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    cep: "",
+    metragem: 150.3,
+    numQuartos: 3,
+    numReformas: 2,
+    tipo: "",
+    finalidade: "",
+    possuiGaragem: true,
+    eMobiliado: false,
+    statusOcupacao: 'Disponível',
+    valorVenalRaw: 950000,
+    contratos: []);
 
 final ImovelModel mockImovel2 = ImovelModel(
-    matricula: '789012',
-    endereco: 'Rua Bela Cintra, 50',
-    statusOcupacao: 'Vendido',
-    valorVenal: 'R\$ 1.200.000,00',
-    contratos: const []);
+    matricula: 'IMV98765',
+    descricao: "",
+    cpfProprietario: "",
+    logradouro: "",
+    numero: "",
+    complemento: "",
+    bairro: "",
+    cidade: "",
+    cep: "",
+    metragem: 150.3,
+    numQuartos: 3,
+    numReformas: 2,
+    tipo: "",
+    finalidade: "",
+    possuiGaragem: true,
+    eMobiliado: false,
+    statusOcupacao: 'Disponível',
+    valorVenalRaw: 950000,
+    contratos: []);
 
 final ProprietarioModel mockProprietarioPrincipal = ProprietarioModel(
     nome: 'Carlos',
