@@ -7,14 +7,17 @@ final ImovelModel mockImovelPerformance = ImovelModel(
       'Rua da Performance, 400 - Dubai', // Endereço mockado para o exemplo
   statusOcupacao: 'Disponível',
   valorVenal: 'R\$ 950.000,00',
-  contratos: const [
+  contratos: [
     ContratoModel(
-        id: '#0030A',
+        codigo: 0,
         tipo: 'Aluguel',
         status: 'Finalizado',
-        dataInicio: '01/01/2023',
-        valor: 'R\$ 3.500,00',
-        imovel: 'Jumeirah Village'),
+        dataInicio: DateTime.parse('1969-07-20 20:18:04Z'),
+        dataFim: DateTime.parse('1969-07-20 20:18:04Z'),
+        cpfAdquirente: "b",
+        cpfProprietario: "a",
+        valor: 3500,
+        matriculaImovel: 'Jumeirah Village'),
   ],
 );
 

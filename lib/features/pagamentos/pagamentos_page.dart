@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:io';
+import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -152,6 +153,13 @@ class _PagamentoContentState extends State<PagamentoContent> {
     await OpenFilex.open(file.path);
   }
 
+  void _navigateToCadastroPagamento(BuildContext context) {
+    // Navega e espera retorno (para recarregar a lista se necessário)
+    Navigator.pushNamed(context, AppRoutes.pagamentosCadastro).then((_) {
+      // Recarregar lista aqui, se necessário (veremos adiante)
+    });
+  }
+
   // --- BUILD E WIDGETS AUXILIARES ---
 
   @override
@@ -199,6 +207,17 @@ class _PagamentoContentState extends State<PagamentoContent> {
                   icon: const Icon(CupertinoIcons.doc_text_viewfinder),
                   // Chama a função de geração de PDF
                   onPressed: () => _gerarRelatorio(transacoesFiltradas),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(CupertinoIcons.add, color: Colors.white),
+                    onPressed: () => _navigateToCadastroPagamento(context),
+                  ),
                 ),
               ],
             ),

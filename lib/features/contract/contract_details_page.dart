@@ -81,7 +81,7 @@ class ContractDetailsPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Código: ${contrato.id}",
+                          "Código: ${contrato.codigo}",
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: primaryColor,
@@ -146,21 +146,21 @@ class ContractDetailsPage extends StatelessWidget {
                   _infoTile(
                     context,
                     title: "Proprietário",
-                    value: contrato.proprietarioNome.toString(),
+                    value: contrato.cpfProprietario.toString(),
                     icon: CupertinoIcons.person_crop_circle,
                   ),
                   const SizedBox(height: 10),
                   _infoTile(
                     context,
                     title: "Adquirente",
-                    value: contrato.adquirenteNome.toString(),
+                    value: contrato.cpfAdquirente.toString(),
                     icon: CupertinoIcons.person_crop_circle_fill,
                   ),
                   const SizedBox(height: 10),
                   _infoTile(
                     context,
                     title: "Corretor",
-                    value: contrato.corretorNome.toString(),
+                    value: contrato.cpfAdquirente.toString(),
                     icon: CupertinoIcons.person_2_square_stack,
                   ),
 

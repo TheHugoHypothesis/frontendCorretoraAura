@@ -52,11 +52,10 @@ class Endpoints {
   static const String contratoAlterarStatus = '/contratos/alterar-status';
   static const String contratoObterPeriodoAluguel =
       '/contratos/obter-periodo-aluguel';
+
+  // Contrato de consulta/relatório
   static const String contratoAluguelAtivo = '/contratos/alugueis-ativos';
   static const String contratoValoresImovel = '/contratos/obter-valores-imovel';
   static const String contratoMaisAlugados = '/contratos/obter-mais-alugados';
   static const String contratoPessoasImovel = '/contratos/obter-pessoas-imovel';
-
-  // ❌ REMOVER: Esta rota não é um endpoint, mas o prefixo do Blueprint.
-  // static const String auth = '/auth';
 }

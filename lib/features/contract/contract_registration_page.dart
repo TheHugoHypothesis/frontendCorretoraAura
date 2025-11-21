@@ -4,6 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:intl/intl.dart';
 
+import 'package:aura_frontend/core/repositorios/contrato_repository.dart';
+import 'package:aura_frontend/data/models/contrato_model.dart';
+
+import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para moeda
+
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -53,21 +58,20 @@ Widget _buildTextField({
   );
 }
 
-// Widget Auxiliar para cabeçalhos de Seção
 Widget _buildSectionHeader(ThemeData theme, String title) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 4.0),
+    padding: const EdgeInsets.only(bottom: 8.0, top: 24.0, left: 4.0),
     child: Text(
-      title,
+      title, // Mantendo capitalização conforme seu gosto (ou use .toUpperCase())
       style: theme.textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.w700,
         color: theme.colorScheme.onSurface,
+        fontSize: 14, // Ajuste fino para ficar igual ao seu
       ),
     ),
   );
 }
 
-// Widget Auxiliar para Selectores de Picker (Simula campo de texto)
 Widget _buildPickerSelector({
   required ThemeData theme,
   required String title,
@@ -97,10 +101,18 @@ Widget _buildPickerSelector({
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "$title: $value",
+              title,
               style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
             ),
           ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: CupertinoColors.black,
+            ),
+          ),
+          const SizedBox(width: 8),
           Icon(CupertinoIcons.chevron_down, color: primaryColor, size: 16),
         ],
       ),
@@ -108,94 +120,8 @@ Widget _buildPickerSelector({
   );
 }
 
-// --- WIDGET AUXILIAR CORRIGIDO: Seletor de Data Estilo Cupertino ---
-Widget _buildDatePickerSelector({
-  // CORREÇÃO: Adicione BuildContext como parâmetro obrigatório
-  required BuildContext context,
-  required ThemeData theme,
-  required String title,
-  required DateTime? selectedDate,
-  required IconData icon,
-  required Function(DateTime) onDateSelected,
-}) {
-  final isDark = theme.brightness == Brightness.dark;
-  final primaryColor = isDark ? Colors.white : Colors.black;
-  final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
-
-  String dateText = selectedDate == null
-      ? "Selecione a Data..."
-      : DateFormat('dd/MM/yyyy').format(selectedDate);
-
-  return GestureDetector(
-    onTap: () {
-      showCupertinoModalPopup(
-        context: context, // Usando o contexto recebido
-        builder: (BuildContext context) {
-          DateTime tempDate = selectedDate ?? DateTime.now();
-
-          return Container(
-            height: 300,
-            color: CupertinoColors.systemBackground.resolveFrom(context),
-            child: Column(
-              children: [
-                Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  height: 40,
-                  child: CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      onDateSelected(tempDate);
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Pronto',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                Expanded(
-                  child: CupertinoDatePicker(
-                    mode: CupertinoDatePickerMode.date,
-                    initialDateTime: tempDate,
-                    onDateTimeChanged: (DateTime newDateTime) {
-                      tempDate = newDateTime;
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: fieldColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.white12 : Colors.grey.shade300,
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: primaryColor, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              "$title: $dateText",
-              style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
-            ),
-          ),
-          Icon(CupertinoIcons.calendar, color: primaryColor, size: 16),
-        ],
-      ),
-    ),
-  );
-}
-
 // ====================================================================
-// PÁGINA: ContractRegistrationPage (Final)
+// PÁGINA PRINCIPAL
 // ====================================================================
 
 class ContractRegistrationPage extends StatefulWidget {
@@ -207,32 +133,123 @@ class ContractRegistrationPage extends StatefulWidget {
 }
 
 class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
-  // Controladores e variáveis de estado...
-  final TextEditingController _valorController = TextEditingController();
-  final TextEditingController _statusController = TextEditingController();
+  // --- REPOSITÓRIO ---
+  final ContratosRepository _contratosRepository = ContratosRepository();
+  bool _isLoading = false;
+
+  // --- CONTROLADORES ---
+  final TextEditingController _codigoController = TextEditingController();
+  final TextEditingController _matriculaImovelController =
+      TextEditingController();
   final TextEditingController _cpfAdquirenteController =
       TextEditingController();
   final TextEditingController _cpfProprietarioController =
       TextEditingController();
-  final TextEditingController _matriculaImovelController =
-      TextEditingController();
-  String? _tipoContrato = 'Venda';
-  final List<String> _tiposContratoDisponiveis = ['Venda', 'Aluguel'];
-  DateTime? _dataInicioAluguel;
-  DateTime? _dataFimAluguel;
-  final cpfMaskFormatter = MaskTextInputFormatter(
+
+  // Money Controller para facilitar R$
+  final MoneyMaskedTextController _valorController = MoneyMaskedTextController(
+    decimalSeparator: ',',
+    thousandSeparator: '.',
+    leftSymbol: 'R\$ ',
+    precision: 2,
+  );
+
+  final TextEditingController _statusController =
+      TextEditingController(text: 'Ativo');
+
+  // --- VARIÁVEIS DE ESTADO ---
+  String _tipoContrato = 'Aluguel';
+  final List<String> _tiposContratoDisponiveis = ['Aluguel', 'Venda'];
+
+  DateTime? _dataInicio;
+  DateTime? _dataFim;
+
+  // --- FORMATADORES ---
+  final cpfFormatter = MaskTextInputFormatter(
       mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
-  void _handleContractRegistration() {
-    // Lógica de envio de dados...
+  // --- AÇÕES ---
+
+  void _handleContractRegistration() async {
+    if (_isLoading) return;
+
+    // 1. Validações
+    if (_matriculaImovelController.text.isEmpty ||
+        _cpfAdquirenteController.text.isEmpty ||
+        _cpfProprietarioController.text.isEmpty ||
+        _valorController.numberValue <= 0) {
+      _showAlert("Dados Incompletos", "Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (_dataInicio == null || _dataFim == null) {
+      _showAlert("Datas", "Por favor, selecione as datas de início e fim.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    // 2. Limpeza de Dados
+    final cpfAdqLimpo = cpfFormatter.getUnmaskedText();
+    // Para o proprietário, removemos manualmente pois o formatter pode estar atrelado ao outro campo
+    final cpfPropLimpo =
+        _cpfProprietarioController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    // 3. Criação do Modelo
+    final novoContrato = ContratoModel(
+      codigo: 0,
+      valor: _valorController.numberValue,
+      status: _statusController.text,
+      tipo: _tipoContrato,
+      dataInicio: _dataInicio!,
+      dataFim: _dataFim!,
+      matriculaImovel: _matriculaImovelController.text.trim(),
+      cpfAdquirente: cpfAdqLimpo,
+      cpfProprietario: cpfPropLimpo,
+    );
+
+    try {
+      final novoCodigo =
+          await _contratosRepository.cadastrarContrato(novoContrato);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text("Sucesso"),
+            // Usa o código real gerado pelo banco
+            content:
+                Text("Contrato ${novoCodigo ?? 'registrado'} com sucesso!"),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        String errorMsg = e.toString().replaceAll("Exception:", "").trim();
+        _showAlert("Erro no Cadastro", errorMsg);
+      }
+    }
+  }
+
+  void _showAlert(String title, String content) {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text("Contrato Cadastrado"),
-        content: Text(
-            "O novo Contrato de $_tipoContrato foi registrado com sucesso!"),
+        title: Text(title),
+        content: Text(content),
         actions: [
           CupertinoDialogAction(
             child: const Text("OK"),
@@ -243,27 +260,26 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
     );
   }
 
-  void _showContractTypePicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext builder) {
-        String initialValue = _tipoContrato ?? _tiposContratoDisponiveis.first;
-        int initialIndex = _tiposContratoDisponiveis.indexOf(initialValue);
+  // --- PICKERS ---
 
-        return Container(
-          height: 300,
-          color: CupertinoColors.white,
+  void _showContractTypePicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 250,
+        color: CupertinoColors.white,
+        child: SafeArea(
+          top: false,
           child: Column(
             children: [
               Container(
                 alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 16),
-                height: 40,
+                padding: const EdgeInsets.only(top: 10, right: 16),
                 child: CupertinoButton(
                   padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Pronto',
+                  child: const Text("Pronto",
                       style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
               Expanded(
@@ -273,28 +289,65 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                   useMagnifier: true,
                   itemExtent: 32.0,
                   scrollController: FixedExtentScrollController(
-                    initialItem: initialIndex < 0 ? 0 : initialIndex,
-                  ),
+                      initialItem:
+                          _tiposContratoDisponiveis.indexOf(_tipoContrato)),
                   onSelectedItemChanged: (int index) {
                     setState(() {
                       _tipoContrato = _tiposContratoDisponiveis[index];
-                      if (_tipoContrato == 'Venda') {
-                        _dataInicioAluguel = null;
-                        _dataFimAluguel = null;
-                      }
                     });
                   },
-                  children: List<Widget>.generate(
-                      _tiposContratoDisponiveis.length, (int index) {
-                    return Center(
-                        child: Text(_tiposContratoDisponiveis[index]));
-                  }),
+                  children: _tiposContratoDisponiveis
+                      .map((t) => Center(child: Text(t)))
+                      .toList(),
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  void _showDatePicker(bool isInicio) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 280,
+        color: CupertinoColors.white,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(top: 10, right: 16),
+                child: CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: const Text("Pronto",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.date,
+                  initialDateTime: isInicio
+                      ? (_dataInicio ?? DateTime.now())
+                      : (_dataFim ?? DateTime.now()),
+                  onDateTimeChanged: (val) {
+                    setState(() {
+                      if (isInicio)
+                        _dataInicio = val;
+                      else
+                        _dataFim = val;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -303,8 +356,15 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.black : Colors.white;
-    final primaryColor = theme.primaryColor;
+    final primaryColor = isDark ? Colors.white : Colors.black;
     final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
+
+    String dataInicioTxt = _dataInicio == null
+        ? "Selecionar"
+        : DateFormat('dd/MM/yyyy').format(_dataInicio!);
+    String dataFimTxt = _dataFim == null
+        ? "Selecionar"
+        : DateFormat('dd/MM/yyyy').format(_dataFim!);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -325,6 +385,19 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                 width: 0.0,
               ),
             ),
+            leading: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.pop(context),
+              child: Icon(CupertinoIcons.back, color: primaryColor),
+            ),
+            trailing: _isLoading
+                ? const CupertinoActivityIndicator()
+                : CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: _handleContractRegistration,
+                    child: const Text("Salvar",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -333,27 +406,23 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ... (Seções 1, 2, 3 - Campos Comuns)
-
-                  _buildSectionHeader(theme, "Tipo de Contrato"),
+                  _buildSectionHeader(theme, "Classificação"),
                   const SizedBox(height: 16),
                   _buildPickerSelector(
                     theme: theme,
                     title: "Tipo",
-                    value: _tipoContrato ?? "Selecione o Tipo...",
-                    icon: CupertinoIcons.doc_fill,
+                    value: _tipoContrato,
+                    icon: CupertinoIcons.doc_text,
                     onTap: _showContractTypePicker,
                   ),
                   const SizedBox(height: 30),
-
-                  _buildSectionHeader(theme, "Detalhes Financeiros e Status"),
+                  _buildSectionHeader(theme, "Financeiro e Status"),
                   const SizedBox(height: 16),
                   _buildTextField(
                     controller: _valorController,
-                    hintText: "Valor Total (R\$)",
-                    icon: CupertinoIcons.money_dollar_circle_fill,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    hintText: "Valor (R\$)",
+                    icon: CupertinoIcons.money_dollar_circle,
+                    keyboardType: TextInputType.number,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
@@ -361,16 +430,14 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _statusController,
-                    hintText: "Status (Ex: Ativo, Finalizado, Pendente)",
-                    icon: CupertinoIcons.hourglass,
+                    hintText: "Status (ex: Ativo)",
+                    icon: CupertinoIcons.info,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 30),
-
-                  _buildSectionHeader(
-                      theme, "Identificação das Partes e Imóvel"),
+                  _buildSectionHeader(theme, "Partes Envolvidas"),
                   const SizedBox(height: 16),
                   _buildTextField(
                     controller: _matriculaImovelController,
@@ -383,75 +450,45 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
-                    controller: _cpfAdquirenteController,
-                    hintText: "CPF do Adquirente",
-                    icon: CupertinoIcons.person_alt_circle_fill,
+                    controller: _cpfProprietarioController,
+                    hintText: "CPF do Proprietário",
+                    icon: CupertinoIcons.person_crop_circle,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [cpfMaskFormatter],
+                    inputFormatters: [cpfFormatter],
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
-                    controller: _cpfProprietarioController,
-                    hintText: "CPF do Proprietário",
-                    icon: CupertinoIcons.person_alt_circle_fill,
+                    controller: _cpfAdquirenteController,
+                    hintText: "CPF do Adquirente",
+                    icon: CupertinoIcons.person_2_fill,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [cpfMaskFormatter],
+                    inputFormatters: [cpfFormatter],
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
                   ),
-
-                  // --- SEÇÃO 4: DATAS DE ALUGUEL (Condicional) ---
-                  if (_tipoContrato == 'Aluguel') ...[
-                    const SizedBox(height: 30),
-                    _buildSectionHeader(theme, "Datas do Aluguel"),
-                    const SizedBox(height: 16),
-                    _buildDatePickerSelector(
-                      context: context, // CHAMADA CORRIGIDA
-                      theme: theme,
-                      title: "Início do Contrato",
-                      selectedDate: _dataInicioAluguel,
-                      icon: CupertinoIcons.play_fill,
-                      onDateSelected: (date) {
-                        setState(() => _dataInicioAluguel = date);
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildDatePickerSelector(
-                      context: context, // CHAMADA CORRIGIDA
-                      theme: theme,
-                      title: "Fim do Contrato",
-                      selectedDate: _dataFimAluguel,
-                      icon: CupertinoIcons.stop_fill,
-                      onDateSelected: (date) {
-                        setState(() => _dataFimAluguel = date);
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 40),
-
-                  // Botão de Cadastro Final
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: CupertinoButton(
-                      color: primaryColor,
-                      onPressed: _handleContractRegistration,
-                      borderRadius: BorderRadius.circular(14),
-                      child: Text(
-                        "Registrar Contrato de $_tipoContrato",
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: backgroundColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 30),
+                  _buildSectionHeader(theme, "Vigência"),
+                  const SizedBox(height: 16),
+                  _buildPickerSelector(
+                    theme: theme,
+                    title: "Início",
+                    value: dataInicioTxt,
+                    icon: CupertinoIcons.calendar_today,
+                    onTap: () => _showDatePicker(true),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 12),
+                  _buildPickerSelector(
+                    theme: theme,
+                    title: "Fim / Previsão",
+                    value: dataFimTxt,
+                    icon: CupertinoIcons.calendar_badge_plus,
+                    onTap: () => _showDatePicker(false),
+                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),

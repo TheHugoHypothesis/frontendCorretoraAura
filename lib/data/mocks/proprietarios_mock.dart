@@ -5,12 +5,15 @@ import '../models/imovel_model.dart';
 import '../models/proprietario_model.dart';
 
 final ContratoModel mockContratoAtivo = ContratoModel(
-    id: '#0025A',
+    codigo: 0,
     tipo: 'Aluguel',
     status: 'Vigente',
-    dataInicio: '01/01/2024',
-    valor: 'R\$ 3.500,00',
-    imovel: 'Apto. Alameda Santos');
+    dataInicio: DateTime.now(),
+    dataFim: DateTime.now(),
+    cpfAdquirente: "",
+    cpfProprietario: "",
+    valor: 3500,
+    matriculaImovel: 'Apto. Alameda Santos');
 
 final ImovelModel mockImovel1 = ImovelModel(
     matricula: '123456',

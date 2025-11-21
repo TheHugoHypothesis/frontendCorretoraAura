@@ -10,6 +10,7 @@ import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:aura_frontend/features/home/imovel_detail_page.dart';
 import 'package:aura_frontend/features/home/imovel_filter_page.dart';
 import 'package:aura_frontend/features/imovel_registration/imovel_registration_page.dart';
+import 'package:aura_frontend/features/pagamentos/pagamentos_cadastro_page.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
 import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
@@ -109,7 +110,9 @@ class MyApp extends StatelessWidget {
         AppRoutes.gerenciamentoProprietarios: (context) =>
             const ProprietarioListPage(),
 
-        AppRoutes.perfilCorretor: (context) => const CorretorProfilePage()
+        AppRoutes.perfilCorretor: (context) => const CorretorProfilePage(),
+        AppRoutes.pagamentosCadastro: (context) =>
+            const PagamentoRegistrationPage()
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {

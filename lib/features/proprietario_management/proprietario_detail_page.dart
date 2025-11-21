@@ -415,11 +415,11 @@ class _ProprietarioDetailPageState extends State<ProprietarioDetailPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("${contrato.tipo} Contrato ${contrato.id}",
+          Text("${contrato.tipo} Contrato ${contrato.codigo}",
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.bold, color: primaryColor)),
           const SizedBox(height: 4),
-          Text("Imóvel: ${contrato.imovel}",
+          Text("Imóvel: ${contrato.matriculaImovel}",
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: Colors.grey.shade600)),
           Text("Valor Mensal: ${contrato.valor}",

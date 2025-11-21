@@ -35,7 +35,7 @@ class ImovelPerformancePage extends StatefulWidget {
 
 class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
   // --- LÓGICA DE CÁLCULO DE RELATÓRIO (Mocked) ---
-  Map<String, String> _calculatePerformanceMetrics() {
+  Map<String, Object> _calculatePerformanceMetrics() {
     final allContracts = widget.imovel.contratos;
     final rentalContracts = allContracts.where((c) => c.tipo == 'Aluguel');
 
@@ -190,7 +190,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
 
   // WIDGET AUXILIAR 1: Tabela de Métricas para PDF
   pw.Widget _buildPdfMetricsTable(
-      Map<String, String> metrics, String status, String valorVenal,
+      Map<String, Object> metrics, String status, String valorVenal,
       {required PdfColor primaryColor}) {
     final metricData = [
       ['Status Atual', status],
@@ -247,7 +247,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
   Widget _buildStatusTile({
     required ThemeData theme,
     required String title,
-    required String value,
+    required Object value,
     required Color color,
   }) {
     final primaryColor =
@@ -265,7 +265,7 @@ class _ImovelPerformancePageState extends State<ImovelPerformancePage> {
           Text(title,
               style: theme.textTheme.bodyMedium?.copyWith(color: color)),
           const SizedBox(height: 4),
-          Text(value,
+          Text(value.toString(),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: primaryColor,

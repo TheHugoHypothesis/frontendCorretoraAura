@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   // 1. O IndexedStack aponta para as classes isoladas
   final List<Widget> _screens = [
     const DiscoverPage(),
-    const ContratoContent(), // Usando o nome de classe limpo
+    const ContratoListPage(), // Usando o nome de classe limpo
     const PagamentoContent(), // Usando o nome de classe limpo
     const SelecaoSubabaPage(
         corretor: mockCorretor), // Perfil (Exemplo de dado dinâmico)

@@ -66,15 +66,26 @@ class ApiClient {
         () => put(endpoint, body, requireAuth: requireAuth));
   }
 
-  Future<Map<String, dynamic>> delete(String endpoint,
-      {bool requireAuth = true}) async {
-    // DELETEs geralmente requerem autenticação
-    final url = Uri.parse('$baseUrl$endpoint');
+  Future<dynamic> delete(String endpoint,
+      {bool requireAuth = true, Map<String, dynamic>? queryParams}) async {
+    Uri url = Uri.parse('$baseUrl$endpoint');
+
+    if (queryParams != null && queryParams.isNotEmpty) {
+      final stringParams =
+          queryParams.map((key, value) => MapEntry(key, value.toString()));
+      url = url.replace(queryParameters: stringParams);
+    }
+
     final headers = await _buildHeaders(requireAuth);
 
+    print('>>> REQ DELETE: $url'); // Log para debug
+
     final response = await http.delete(url, headers: headers);
+
     return await _handleResponse(
-        response, () => delete(endpoint, requireAuth: requireAuth));
+        response,
+        () => delete(endpoint,
+            requireAuth: requireAuth, queryParams: queryParams));
   }
 
   Future<Map<String, dynamic>> uploadFile(String endpoint, File file,
