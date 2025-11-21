@@ -1,5 +1,6 @@
 import 'package:aura_frontend/core/repositorios/imovel_repository.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
+import 'package:aura_frontend/features/home/imoveis_map_page.dart';
 import 'package:aura_frontend/features/home/propriety_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -17,13 +18,44 @@ class DiscoverPage extends StatefulWidget {
 class _DiscoverPageState extends State<DiscoverPage> {
   final ImovelRepository _imovelRepository = ImovelRepository();
 
+  // Controlador para a barra de busca local
+  final TextEditingController _searchController = TextEditingController();
+
+  // Lista 1: Dados originais vindos da API
   List<ImovelModel> _imoveisList = [];
+  // Lista 2: Dados filtrados localmente (exibidos na tela)
+  List<ImovelModel> _filteredImoveisList = [];
+
   bool _isLoading = false;
   bool _hasLoadedInitial = false;
 
   @override
   void initState() {
     super.initState();
+
+    // Adiciona o ouvinte para filtrar enquanto digita
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase();
+
+    setState(() {
+      if (query.isEmpty) {
+        _filteredImoveisList = List.from(_imoveisList);
+      } else {
+        _filteredImoveisList = _imoveisList.where((imovel) {
+          return imovel.logradouro.toLowerCase().contains(query) ||
+              imovel.enderecoCompleto.toLowerCase().contains(query);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _fetchImoveis(Map<String, dynamic> filters) async {
@@ -35,6 +67,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
       if (mounted) {
         setState(() {
           _imoveisList = resultados;
+          _filteredImoveisList = resultados;
+          _searchController.clear();
+
           _isLoading = false;
           _hasLoadedInitial = true;
         });
@@ -49,16 +84,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  void _showNotificationsModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+  void _navigateToMap(BuildContext context) {
+    // Passa a lista atual de imóveis (filtrados ou todos)
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => ImoveisMapPage(
+            imoveis: _filteredImoveisList), // Usa a lista filtrada
       ),
-      builder: (context) {
-        return const NotificationModalContent();
-      },
     );
   }
 
@@ -146,8 +179,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         shape: BoxShape.circle,
                       ),
                       child: IconButton(
-                        onPressed: () => _showNotificationsModal(context),
-                        icon: const Icon(CupertinoIcons.bell, size: 20),
+                        onPressed: () => _navigateToMap(context),
+                        icon: const Icon(CupertinoIcons.map_fill, size: 22),
                       ),
                     ),
                   ),
@@ -177,9 +210,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
+                            controller:
+                                _searchController, // ✅ Controlador Conectado
                             style: theme.textTheme.bodyMedium,
                             decoration: const InputDecoration(
-                              hintText: "Busque propriedades...",
+                              hintText: "Busca logradouro...",
                               border: InputBorder.none,
                               hintStyle: TextStyle(color: Colors.grey),
                             ),
@@ -192,7 +227,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
                 const SizedBox(width: 12),
 
-                // Botão de Filtro (Abre modal de filtros)
+                // Botão de Filtro (API)
                 Container(
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white10 : Colors.grey.shade100,
@@ -200,13 +235,13 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   ),
                   child: IconButton(
                     onPressed: () => _navigateToFilterPage(),
-                    icon: const Icon(CupertinoIcons.slider_horizontal_3),
+                    icon: const Icon(CupertinoIcons.doc_text_search),
                   ),
                 ),
 
                 const SizedBox(width: 12),
 
-                // Botão Adicionar Imóvel (Navegação Limpa)
+                // Botão Adicionar Imóvel
                 CupertinoButton(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -241,7 +276,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
               ),
               child: _isLoading
                   ? const Center(child: CupertinoActivityIndicator())
-                  : _imoveisList.isEmpty
+                  : _filteredImoveisList.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -251,7 +286,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               const SizedBox(height: 10),
                               Text(
                                 _hasLoadedInitial
-                                    ? "Nenhum imóvel encontrado com estes filtros."
+                                    ? "Nenhum imóvel encontrado com este termo."
                                     : "Use o filtro para buscar imóveis.",
                                 style: TextStyle(color: Colors.grey.shade600),
                               ),
@@ -259,9 +294,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
                           ),
                         )
                       : ListView.builder(
-                          itemCount: _imoveisList.length,
+                          itemCount: _filteredImoveisList.length,
                           itemBuilder: (context, index) {
-                            final imovel = _imoveisList[index];
+                            final imovel = _filteredImoveisList[index];
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
@@ -270,7 +305,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
                                 onTap: () {
                                   Navigator.pushNamed(
                                       context, AppRoutes.propertyDetails,
-                                      // Passa a URL ou ID para a tela de detalhes
                                       arguments: imovel);
                                 },
                               ),

@@ -53,25 +53,25 @@ class ContratosRepository {
     }
   }
 
-  Future<List<dynamic>> getContratosNoPrazo() async {
+  Future<List<ContratoModel>> getContratosGerais() async {
     final response = await _apiClient.get(
-      Endpoints.contratoPrazo,
-      requireAuth: true,
-    );
-    // Retorna a lista crua ou mapeia para Model
-    return response is List ? response : [];
-  }
-
-  /// Contratos de Aluguel Ativos
-  Future<List<ContratoModel>> getAlugueisAtivos() async {
-    final response = await _apiClient.get(
-      Endpoints.contratoAluguelAtivo,
+      Endpoints.contratosList,
       requireAuth: true,
     );
     if (response is List) {
       return response.map((j) => ContratoModel.fromJson(j)).toList();
     }
     return [];
+  }
+
+  /// Obtém os contadores para os Cards (Retorna um Map)
+  Future<Map<String, dynamic>> getDashboardStats() async {
+    final response = await _apiClient.get(
+      Endpoints.contratosDashboard,
+      requireAuth: true,
+    );
+    // Espera: { "ativos": 10, "vencendo": 2, "atrasados": 1 }
+    return response is Map<String, dynamic> ? response : {};
   }
 
   Future<List<HistoricoPessoasModel>> getHistoricoPessoasImovel(

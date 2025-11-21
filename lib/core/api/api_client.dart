@@ -58,6 +58,11 @@ class ApiClient {
     final url = Uri.parse('$baseUrl$endpoint');
     final headers = await _buildHeaders(requireAuth);
 
+    print('--- INÍCIO LOG REQUISIÇÃO (PUT) ---');
+    print('>>> URL: $url');
+    print('>>> BODY ENVIADO: ${json.encode(body)}');
+    print('-----------------------------------');
+
     final response =
         await http.put(url, headers: headers, body: json.encode(body));
     return await _handleResponse(

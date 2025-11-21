@@ -37,23 +37,29 @@ class PagamentoModel {
     };
   }
 
-  // ---------------------------------------------------------
-  // DESSERIALIZAÇÃO: JSON -> Model (Para receber do Backend)
-  // ---------------------------------------------------------
   factory PagamentoModel.fromJson(Map<String, dynamic> json) {
     return PagamentoModel(
-      codigoContrato: json['codigo_contrato']?.toString() ?? '',
+      codigoContrato: json['codigo_c']?.toString() ??
+          json['codigo_contrato']?.toString() ??
+          '',
       numeroPagamento: json['n_pagamento'] is int
           ? json['n_pagamento']
           : int.tryParse(json['n_pagamento'].toString()) ?? 1,
       valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
-      dataVencimento:
-          DateTime.tryParse(json['data_vencimento'] ?? '') ?? DateTime.now(),
-      dataPagamento:
-          DateTime.tryParse(json['data_pagamento'] ?? '') ?? DateTime.now(),
+      dataVencimento: _parseDate(json['data_vencimento']),
+      dataPagamento: _parseDate(json['data_pagamento']),
       status: json['status'] ?? 'pendente',
       formaPagamento: json['forma_pagamento'] ?? '',
       tipo: json['tipo'] ?? 'aluguel',
     );
+  }
+
+  static DateTime _parseDate(dynamic dateValue) {
+    if (dateValue == null) return DateTime.now();
+    try {
+      return DateTime.parse(dateValue.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
   }
 }

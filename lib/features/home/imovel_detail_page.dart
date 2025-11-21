@@ -9,39 +9,58 @@ import '../../data/models/imovel_model.dart';
 import '../../data/models/contrato_model.dart';
 import 'package:intl/intl.dart';
 
-import '../../data/mocks/imovel_performance_mock.dart';
-
-// **********************************************************************
-//                 FIM DOS MOCKS
-// **********************************************************************
-
-class PropertyPage extends StatelessWidget {
+class PropertyPage extends StatefulWidget {
   final ImovelModel imovel;
 
   const PropertyPage({super.key, required this.imovel});
+
+  @override
+  State<PropertyPage> createState() => _PropertyPageState();
+}
+
+class _PropertyPageState extends State<PropertyPage> {
+  final PageController _pageController = PageController();
+  int _currentImageIndex = 0;
 
   void _navigateToHistory(BuildContext context) {
     Navigator.push(
       context,
       CupertinoPageRoute(
-        builder: (context) => ImovelHistoryPage(matricula: imovel.matricula),
+        builder: (context) =>
+            ImovelHistoryPage(matricula: widget.imovel.matricula),
       ),
     );
+  }
+
+  void _nextImage() {
+    if (_currentImageIndex < widget.imovel.imagens.length - 1) {
+      _pageController.nextPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
+  }
+
+  void _previousImage() {
+    if (_currentImageIndex > 0) {
+      _pageController.previousPage(
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = Colors.black;
+    final imovel = widget.imovel;
 
     // Formatador de Moeda
     final currencyFormat =
         NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     // Tenta converter o valor venal (string) para double para formatação limpa, ou usa a string direta
-    String precoFormatado = imovel.valorVenalFormatado;
+    String precoFormatado = widget.imovel.valorVenalFormatado;
 
-    // Tag Hero Única
-    final heroTag = "property-image-${imovel.matricula}";
+    final List<String> imagensExibicao = imovel.imagens.isNotEmpty
+        ? imovel.imagens
+        : ['assets/img1.jpg']; // Placeholder local se não tiver URL
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -57,10 +76,21 @@ class PropertyPage extends StatelessWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // IMAGEM DO IMÓVEL (Hero)
-                  Hero(
-                    tag: heroTag,
-                    child: _buildImovelImage(imovel.profileImageUrl),
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: imagensExibicao.length,
+                    onPageChanged: (index) {
+                      setState(() => _currentImageIndex = index);
+                    },
+                    itemBuilder: (context, index) {
+                      return Hero(
+                        // Hero tag única apenas para a primeira imagem para evitar conflitos
+                        tag: index == 0
+                            ? "property-image-${imovel.matricula}"
+                            : "img-$index",
+                        child: _buildImovelImage(imagensExibicao[index]),
+                      );
+                    },
                   ),
 
                   // Gradiente
@@ -78,17 +108,71 @@ class PropertyPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Tags (Tipo e Avaliação)
+                  if (imagensExibicao.length > 1) ...[
+                    // Seta Esquerda
+                    if (_currentImageIndex > 0)
+                      Positioned(
+                        left: 10,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _navArrowButton(
+                            icon: CupertinoIcons.chevron_left,
+                            onTap: _previousImage,
+                          ),
+                        ),
+                      ),
+                    // Seta Direita
+                    if (_currentImageIndex < imagensExibicao.length - 1)
+                      Positioned(
+                        right: 10,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: _navArrowButton(
+                            icon: CupertinoIcons.chevron_right,
+                            onTap: _nextImage,
+                          ),
+                        ),
+                      ),
+                  ],
+
                   Positioned(
                     bottom: 20,
                     left: 16,
+                    right: 16,
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildTag(context, Icons.star_rounded,
-                            "5.0"), // Mock de avaliação
-                        const SizedBox(width: 8),
-                        _buildTag(context, Icons.apartment_rounded,
-                            imovel.tipo ?? "Imóvel"),
+                        // Tags
+                        Row(
+                          children: [
+                            _buildTag(context, Icons.star_rounded, "5.0"),
+                            const SizedBox(width: 8),
+                            _buildTag(context, Icons.apartment_rounded,
+                                imovel.tipo ?? "Imóvel"),
+                          ],
+                        ),
+
+                        // Indicador de Paginação (Dots)
+                        if (imagensExibicao.length > 1)
+                          Row(
+                            children:
+                                List.generate(imagensExibicao.length, (index) {
+                              return Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 3),
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _currentImageIndex == index
+                                      ? Colors.white
+                                      : Colors.white.withOpacity(0.5),
+                                ),
+                              );
+                            }),
+                          ),
                       ],
                     ),
                   ),
@@ -126,9 +210,9 @@ class PropertyPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          imovel.numero.isNotEmpty
-                              ? "${imovel.logradouro}, ${imovel.numero}"
-                              : imovel.logradouro,
+                          widget.imovel.numero.isNotEmpty
+                              ? "${widget.imovel.logradouro}, ${widget.imovel.numero}"
+                              : widget.imovel.logradouro,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.headlineMedium?.copyWith(
@@ -154,7 +238,7 @@ class PropertyPage extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          imovel.enderecoCompleto, // Endereço completo
+                          widget.imovel.enderecoCompleto, // Endereço completo
                           style: const TextStyle(color: Colors.black54),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -168,12 +252,12 @@ class PropertyPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildFeatureInfo(
-                          Icons.bed, "${imovel.numQuartos ?? 0} Quartos"),
-                      _buildFeatureInfo(
-                          Icons.square_foot, "${imovel.metragem ?? 0} m²"),
-                      _buildFeatureInfo(
-                          Icons.build, "${imovel.numReformas ?? 0} Reformas"),
+                      _buildFeatureInfo(Icons.bed,
+                          "${widget.imovel.numQuartos ?? 0} Quartos"),
+                      _buildFeatureInfo(Icons.square_foot,
+                          "${widget.imovel.metragem ?? 0} m²"),
+                      _buildFeatureInfo(Icons.build,
+                          "${widget.imovel.numReformas ?? 0} Reformas"),
                     ],
                   ),
 
@@ -188,7 +272,7 @@ class PropertyPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Este imóvel está atualmente com status: ${imovel.statusOcupacao}. Localizado em uma região privilegiada, ideal para ${imovel.finalidade}.',
+                    'Este imóvel está atualmente com status: ${widget.imovel.statusOcupacao}. Localizado em uma região privilegiada, ideal para ${widget.imovel.finalidade}.',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.black87,
                       height: 1.5,
@@ -197,7 +281,7 @@ class PropertyPage extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // Comodidades (Chips)
-                  if (imovel.comodidades.isNotEmpty) ...[
+                  if (widget.imovel.comodidades.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     Text("Comodidades",
                         style: theme.textTheme.titleMedium
@@ -206,7 +290,7 @@ class PropertyPage extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: imovel.comodidades
+                      children: widget.imovel.comodidades
                           .map((c) =>
                               _buildTag(context, Icons.check, c, isDark: true))
                           .toList(),
@@ -259,8 +343,8 @@ class PropertyPage extends StatelessWidget {
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () {},
-                icon: const Icon(CupertinoIcons.calendar),
-                label: const Text("Agendar Visita"),
+                icon: const Icon(CupertinoIcons.building_2_fill),
+                label: const Text("Editar Imóvel"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
@@ -279,18 +363,43 @@ class PropertyPage extends StatelessWidget {
   }
 
   // --- WIDGETS AUXILIARES ---
+  Widget _buildImovelImage(String urlOrAsset) {
+    // Verifica se é URL (http)
+    if (urlOrAsset.startsWith('http')) {
+      print("Tentando carregar imagem: $urlOrAsset");
 
-  Widget _buildImovelImage(String? url) {
-    if (url != null && url.isNotEmpty) {
       return Image.network(
-        url,
+        urlOrAsset,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) =>
-            Image.asset("assets/img1.jpg", fit: BoxFit.cover),
+        loadingBuilder: (ctx, child, progress) => progress == null
+            ? child
+            : Container(
+                color: Colors.grey.shade200,
+                child: const Center(child: CupertinoActivityIndicator())),
+        errorBuilder: (context, error, stackTrace) {
+          print("ERRO AO CARREGAR IMAGEM ($urlOrAsset): $error");
+
+          return Image.asset("assets/img1.jpg", fit: BoxFit.cover);
+        },
       );
+    } else {
+      return Image.asset(urlOrAsset, fit: BoxFit.cover);
     }
-    return Image.asset("assets/img1.jpg",
-        fit: BoxFit.cover); // Placeholder padrão
+  }
+
+  Widget _navArrowButton(
+      {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.3),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 24),
+      ),
+    );
   }
 
   Widget _buildFeatureInfo(IconData icon, String text) {

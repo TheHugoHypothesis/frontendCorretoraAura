@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _screens = [
     const DiscoverPage(),
     const ContratoListPage(), // Usando o nome de classe limpo
-    const PagamentoContent(), // Usando o nome de classe limpo
+    const PagamentosListPage(), // Usando o nome de classe limpo
     const SelecaoSubabaPage(
         corretor: mockCorretor), // Perfil (Exemplo de dado dinâmico)
   ];

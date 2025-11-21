@@ -47,4 +47,21 @@ class PagamentosRepository {
     }
     return [];
   }
+
+  Future<void> atualizarStatus(
+      String codigoContrato, int numeroPagamento, String novoStatus) async {
+    try {
+      await _apiClient.put(
+        Endpoints.pagamentosAtualizaStatus,
+        {
+          "codigo_contrato": codigoContrato,
+          "n_pagamento": numeroPagamento,
+          "status": novoStatus,
+        },
+        requireAuth: true,
+      );
+    } catch (e) {
+      throw Exception("Falha ao atualizar status: $e");
+    }
+  }
 }

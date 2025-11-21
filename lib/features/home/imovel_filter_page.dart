@@ -168,7 +168,7 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
       _matriculaController.clear();
       _metragemMinController.clear();
       _metragemMaxController.clear();
-      _valorRange = const RangeValues(100000, 1000000);
+      _valorRange = const RangeValues(0, 1000000);
       _tipoSelecionado = null;
       _finalidadeSelecionada = null;
       _numQuartos = 1;

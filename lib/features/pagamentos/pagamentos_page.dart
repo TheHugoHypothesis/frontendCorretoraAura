@@ -1,449 +1,615 @@
-import 'dart:ui';
 import 'dart:io';
-import 'package:aura_frontend/routes/app_routes.dart';
+
+import 'package:aura_frontend/features/pagamentos/pagamentos_detail_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:pdf/pdf.dart';
 
-import '../../data/models/transacao_model.dart';
-import '../../data/mocks/transacao_mock.dart';
+// Imports do Projeto
+import 'package:aura_frontend/core/repositorios/pagamentos_repository.dart';
+import 'package:aura_frontend/data/models/pagamento_model.dart';
+import 'package:aura_frontend/routes/app_routes.dart';
 
-class PagamentoContent extends StatefulWidget {
-  const PagamentoContent({super.key});
+// ----------------------------------------------------------------------
+//                       PÁGINA PRINCIPAL
+// ----------------------------------------------------------------------
+
+class PagamentosListPage extends StatefulWidget {
+  const PagamentosListPage({super.key});
 
   @override
-  State<PagamentoContent> createState() => _PagamentoContentState();
+  State<PagamentosListPage> createState() => _PagamentosListPageState();
 }
 
-class _PagamentoContentState extends State<PagamentoContent> {
-  int _filterTipoIndex = 0;
-  int _filterStatusIndex = 0;
-  String _ordenarPor = 'data';
+class _PagamentosListPageState extends State<PagamentosListPage> {
+  final PagamentosRepository _repository = PagamentosRepository();
 
-  // Usa o modelo de dados para a lista de estado
-  late List<TransacaoModel> _transacoes;
+  // Estado
+  List<PagamentoModel> _pagamentos = [];
+  bool _isLoading = false;
+  bool _hasSearched = false; // Para controlar a mensagem inicial
+
+  // Controlador de Busca (Matrícula)
+  final TextEditingController _matriculaSearchController =
+      TextEditingController();
+
+  // Formatadores
+  final currencyFormat = NumberFormat.simpleCurrency(locale: 'pt_BR');
+  final dateFormat = DateFormat('dd/MM/yyyy');
 
   @override
-  void initState() {
-    super.initState();
-    _transacoes =
-        mockTransacoesRaw.map((e) => TransacaoModel.fromMap(e)).toList();
+  void dispose() {
+    _matriculaSearchController.dispose();
+    super.dispose();
   }
 
-  // --- LÓGICA DO PDF ---
-  void _gerarRelatorio(List<TransacaoModel> transacoes) async {
-    final pdf = pw.Document();
-    final dataAtual = DateTime.now();
-    final dataFormatada = DateFormat('dd-MM-yyyy').format(dataAtual);
+  // --- AÇÕES ---
 
-    double entradas = 0;
-    double saidas = 0;
+  // Busca pagamentos pelo imóvel (Rota: /pagamento/extrato-imovel)
+  Future<void> _searchPagamentos() async {
+    final matricula = _matriculaSearchController.text.trim();
+    if (matricula.isEmpty) return;
 
-    for (var t in transacoes) {
-      if (t.tipo == 'entrada') {
-        entradas += t.valor;
-      } else if (t.tipo == 'saida') {
-        saidas += t.valor;
+    // Fecha o teclado
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    try {
+      final resultados = await _repository.getExtratoImovel(matricula);
+
+      if (mounted) {
+        setState(() {
+          _pagamentos = resultados;
+          _isLoading = false;
+          _hasSearched = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasSearched = true;
+          _pagamentos = [];
+        });
+        _showAlert("Erro", "Não foi possível buscar os pagamentos: $e");
       }
     }
+  }
 
-    final saldo = entradas - saidas;
+  void _navigateToCadastro(BuildContext context) async {
+    await Navigator.pushNamed(context, AppRoutes.pagamentosCadastro);
+  }
 
-    // Montagem do PDF
-    pdf.addPage(
-      pw.MultiPage(
-        margin: const pw.EdgeInsets.all(24),
-        build: (pw.Context context) => [
-          pw.Header(
-            level: 0,
-            child: pw.Text(
-              'Relatório Financeiro - Aura Corretora Imobiliária',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
-          pw.Text(
-              'Data de emissão: ${DateFormat('dd/MM/yyyy').format(dataAtual)}',
-              style: const pw.TextStyle(fontSize: 12)),
-
-          pw.SizedBox(height: 20),
-
-          pw.Table.fromTextArray(
-            border: null,
-            headers: const ['Título', 'Tipo', 'Valor (R\$)', 'Status', 'Data'],
-            // Usando o modelo diretamente
-            data: transacoes.map((t) {
-              return [
-                t.titulo,
-                t.tipo == 'entrada' ? 'Entrada' : 'Saída',
-                t.valor.toStringAsFixed(2),
-                t.status.toUpperCase(),
-                DateFormat('dd/MM/yyyy').format(t.data),
-              ];
-            }).toList(),
-            headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-            headerDecoration: const pw.BoxDecoration(color: PdfColors.black),
-            cellAlignment: pw.Alignment.centerLeft,
-            cellStyle: const pw.TextStyle(fontSize: 11),
-            rowDecoration: pw.BoxDecoration(
-              color: PdfColors.grey100,
-              border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
-            ),
-          ),
-
-          pw.SizedBox(height: 30),
-
-          pw.Divider(),
-
-          // Resumo financeiro
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Entradas:',
-                  style: pw.TextStyle(fontSize: 14, color: PdfColors.green)),
-              pw.Text('R\$ ${entradas.toStringAsFixed(2)}',
-                  style: pw.TextStyle(
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.green)),
-            ],
-          ),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Saídas:',
-                  style:
-                      const pw.TextStyle(fontSize: 14, color: PdfColors.red)),
-              pw.Text('R\$ ${saidas.toStringAsFixed(2)}',
-                  style: pw.TextStyle(
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.red)),
-            ],
-          ),
-          pw.Divider(),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text('Saldo:',
-                  style:
-                      const pw.TextStyle(fontSize: 16, color: PdfColors.black)),
-              pw.Text(
-                'R\$ ${saldo.toStringAsFixed(2)}',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                  color: saldo >= 0 ? PdfColors.green800 : PdfColors.red800,
-                ),
-              ),
-            ],
-          ),
+  void _showAlert(String title, String content) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(context),
+          )
         ],
       ),
     );
-
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File("${dir.path}/relatorio_financeiro_$dataFormatada.pdf");
-    await file.writeAsBytes(await pdf.save());
-
-    await OpenFilex.open(file.path);
   }
 
-  void _navigateToCadastroPagamento(BuildContext context) {
-    // Navega e espera retorno (para recarregar a lista se necessário)
-    Navigator.pushNamed(context, AppRoutes.pagamentosCadastro).then((_) {
-      // Recarregar lista aqui, se necessário (veremos adiante)
-    });
-  }
+  void _exportarExtratoPdf() async {
+    if (_pagamentos.isEmpty) {
+      _showAlert(
+          "Atenção", "Não há dados para exportar. Faça uma busca primeiro.");
+      return;
+    }
 
-  // --- BUILD E WIDGETS AUXILIARES ---
+    // 1. Feedback Visual (Loading)
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          const Center(child: CupertinoActivityIndicator(radius: 15)),
+    );
+
+    try {
+      final pdf = pw.Document();
+      final matricula = _matriculaSearchController.text;
+      final dataEmissao = dateFormat.format(DateTime.now());
+
+      // Cálculos de Totais para o PDF
+      double totalPago = 0;
+      double totalPendente = 0;
+      for (var p in _pagamentos) {
+        if (p.status.toLowerCase() == 'pago')
+          totalPago += p.valor;
+        else
+          totalPendente += p.valor;
+      }
+
+      // Dados da Tabela
+      final tableData = _pagamentos
+          .map((p) => [
+                dateFormat.format(p.dataVencimento),
+                p.numeroPagamento.toString(),
+                p.tipo.toUpperCase(),
+                p.status.toUpperCase(),
+                p.formaPagamento,
+                currencyFormat.format(p.valor),
+              ])
+          .toList();
+
+      // Adiciona Cabeçalho da Tabela
+      tableData.insert(
+          0, ['Vencimento', 'Parc.', 'Tipo', 'Status', 'Forma', 'Valor']);
+
+      // 2. Construção do Documento
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          build: (pw.Context context) => [
+            // Cabeçalho AURA
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("AURA CORRETORA",
+                      style: pw.TextStyle(
+                          fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Extrato Financeiro",
+                      style: const pw.TextStyle(
+                          fontSize: 16, color: PdfColors.grey700)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 10),
+
+            // Informações do Imóvel
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.grey100,
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text("Imóvel (Matrícula): $matricula",
+                            style:
+                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                        pw.Text("Emissão: $dataEmissao",
+                            style: const pw.TextStyle(
+                                fontSize: 10, color: PdfColors.grey600)),
+                      ]),
+                  pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        pw.Text(
+                            "Total Pago: ${currencyFormat.format(totalPago)}",
+                            style: pw.TextStyle(
+                                color: PdfColors.green700,
+                                fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                            "Pendente: ${currencyFormat.format(totalPendente)}",
+                            style: pw.TextStyle(color: PdfColors.red700)),
+                      ]),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 20),
+
+            // Tabela de Dados
+            pw.Table.fromTextArray(
+              headers: tableData[0],
+              data: tableData.sublist(1),
+              headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+              headerDecoration: const pw.BoxDecoration(color: PdfColors.black),
+              rowDecoration: const pw.BoxDecoration(
+                  border: pw.Border(
+                      bottom:
+                          pw.BorderSide(color: PdfColors.grey300, width: 0.5))),
+              cellAlignment: pw.Alignment.centerLeft,
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.center,
+                5: pw.Alignment.centerRight,
+              },
+              cellStyle: const pw.TextStyle(fontSize: 10),
+              headerCellDecoration:
+                  const pw.BoxDecoration(color: PdfColors.black),
+            ),
+
+            pw.SizedBox(height: 30),
+            pw.Footer(
+              leading: pw.Text("Aura Corretora Imobiliária",
+                  style:
+                      const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+              trailing: pw.Text("Página 1",
+                  style:
+                      const pw.TextStyle(fontSize: 10, color: PdfColors.grey)),
+            ),
+          ],
+        ),
+      );
+
+      // 3. Salvar e Abrir
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName =
+          "extrato_${matricula}_${DateTime.now().millisecondsSinceEpoch}.pdf";
+      final file = File("${dir.path}/$fileName");
+      await file.writeAsBytes(await pdf.save());
+
+      if (mounted) {
+        Navigator.pop(context); // Fecha o loading
+        await OpenFilex.open(file.path); // Abre o PDF
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Fecha o loading
+        _showAlert("Erro no PDF", "Falha ao gerar arquivo: $e");
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final formato = NumberFormat.simpleCurrency(locale: 'pt_BR');
+    final primaryColor = isDark ? Colors.white : Colors.black;
+    final backgroundColor = isDark ? Colors.black : Colors.white;
+    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
 
-    final transacoesFiltradas = _transacoes.where((t) {
-      if (_filterTipoIndex == 1 && t.tipo != 'entrada') return false;
-      if (_filterTipoIndex == 2 && t.tipo != 'saida') return false;
-      if (_filterStatusIndex == 1 && t.status != 'pago') return false;
-      if (_filterStatusIndex == 2 && t.status != 'pendente') return false;
-      if (_filterStatusIndex == 3 && t.status != 'atrasado') return false;
-      return true;
-    }).toList()
-      ..sort((a, b) => _ordenarPor == 'data'
-          ? b.data.compareTo(a.data)
-          : b.valor.compareTo(a.valor));
-
-    final totalEntradas = _transacoes
-        .where((t) => t.tipo == 'entrada')
-        .fold(0.0, (s, t) => s + t.valor);
-    final totalSaidas = _transacoes
-        .where((t) => t.tipo == 'saida')
-        .fold(0.0, (s, t) => s + t.valor);
-    final saldo = totalEntradas - totalSaidas;
-
-    return SafeArea(
-      child: Column(
-        children: [
-          // HEADER/APPBAR CUSTOMIZADA
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Fluxo de Pagamentos',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(CupertinoIcons.doc_text_viewfinder),
-                  // Chama a função de geração de PDF
-                  onPressed: () => _gerarRelatorio(transacoesFiltradas),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(CupertinoIcons.add, color: Colors.white),
-                    onPressed: () => _navigateToCadastroPagamento(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // BODY
-          Expanded(
-            child: Padding(
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // --- HEADER (Estilo Consistente) ---
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildResumoFinanceiro(
-                      isDark, formato, totalEntradas, totalSaidas, saldo),
-
-                  const SizedBox(height: 20),
-
-                  _buildFiltros(),
-
-                  const SizedBox(height: 16),
-
-                  // Lista de Transações
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: transacoesFiltradas.isEmpty
-                          ? const Center(
-                              child: Text("Nenhuma transação encontrada."),
-                            )
-                          : ListView.builder(
-                              key: ValueKey(transacoesFiltradas.length),
-                              itemCount: transacoesFiltradas.length,
-                              itemBuilder: (context, index) {
-                                final t = transacoesFiltradas[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  // Passa o MODEL
-                                  child:
-                                      _buildCardTransacao(t, formato, isDark),
-                                );
-                              },
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Financeiro",
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      Text(
+                        "Extratos por Imóvel",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      if (_hasSearched && _pagamentos.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                shape: BoxShape.circle),
+                            child: IconButton(
+                              icon: const Icon(CupertinoIcons.printer,
+                                  size: 20, color: Colors.black),
+                              onPressed: _exportarExtratoPdf,
+                              tooltip: "Exportar PDF",
                             ),
+                          ),
+                        ),
+                      CupertinoButton(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        color: isDark ? Colors.grey.shade800 : Colors.black,
+                        borderRadius: BorderRadius.circular(12),
+                        onPressed: () => Navigator.pushNamed(
+                            context, AppRoutes.pagamentosCadastro),
+                        child: const Icon(CupertinoIcons.add,
+                            size: 20, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // --- BARRA DE BUSCA (Matrícula) ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: fieldColor,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.search,
+                              color: Colors.grey.shade500),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: _matriculaSearchController,
+                              style: theme.textTheme.bodyMedium
+                                  ?.copyWith(color: primaryColor),
+                              keyboardType: TextInputType
+                                  .number, // Matrícula geralmente é número
+                              decoration: const InputDecoration(
+                                hintText: "Buscar por Matrícula...",
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                              onSubmitted: (_) => _searchPagamentos(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Botão de Buscar
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white12 : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon:
+                          Icon(CupertinoIcons.arrow_right, color: primaryColor),
+                      onPressed: _searchPagamentos,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // Métodos auxiliares de UI (Movidos para dentro da classe State)
+            const SizedBox(height: 10),
 
-  Widget _buildResumoFinanceiro(bool isDark, NumberFormat formato,
-      double entradas, double saidas, double saldo) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _resumoItem(
-                    'Entradas', formato.format(entradas), Colors.greenAccent),
-                _resumoItem('Saídas', formato.format(saidas), Colors.redAccent),
-                _resumoItem(
-                  'Saldo',
-                  formato.format(saldo),
-                  saldo >= 0 ? Colors.greenAccent : Colors.redAccent,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _resumoItem(String titulo, String valor, Color cor) {
-    return Column(
-      children: [
-        Text(titulo, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        const SizedBox(height: 6),
-        Text(valor,
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: cor)),
-      ],
-    );
-  }
-
-  Widget _buildFiltros() {
-    return Column(
-      children: [
-        CupertinoSegmentedControl<int>(
-          children: const {
-            0: Padding(padding: EdgeInsets.all(8), child: Text("Todos")),
-            1: Padding(padding: EdgeInsets.all(8), child: Text("Entradas")),
-            2: Padding(padding: EdgeInsets.all(8), child: Text("Saídas")),
-          },
-          groupValue: _filterTipoIndex,
-          onValueChanged: (v) => setState(() => _filterTipoIndex = v),
-        ),
-        const SizedBox(height: 10),
-        CupertinoSegmentedControl<int>(
-          children: const {
-            0: Padding(
-                padding: EdgeInsets.all(8), child: Text("Status: Todos")),
-            1: Padding(padding: EdgeInsets.all(8), child: Text("Pagos")),
-            2: Padding(padding: EdgeInsets.all(8), child: Text("Pendentes")),
-            3: Padding(padding: EdgeInsets.all(8), child: Text("Atrasados")),
-          },
-          groupValue: _filterStatusIndex,
-          onValueChanged: (v) => setState(() => _filterStatusIndex = v),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const Text("Ordenar por: "),
-            DropdownButton<String>(
-              value: _ordenarPor,
-              underline: const SizedBox(),
-              items: const [
-                DropdownMenuItem(value: 'data', child: Text("Data")),
-                DropdownMenuItem(value: 'valor', child: Text("Valor")),
-              ],
-              onChanged: (v) => setState(() => _ordenarPor = v!),
+            // --- LISTA DE RESULTADOS ---
+            Expanded(
+              child: _buildContentState(primaryColor, isDark),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildCardTransacao(
-      TransacaoModel t, NumberFormat formato, bool isDark) {
-    final statusColor = {
-      'pago': Colors.greenAccent,
-      'pendente': Colors.orangeAccent,
-      'atrasado': Colors.redAccent,
-    }[t.status]!;
+  // Gerencia o que mostrar (Loading, Vazio, Lista)
+  Widget _buildContentState(Color primaryColor, bool isDark) {
+    if (_isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+    if (!_hasSearched) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.doc_text_search,
+                size: 60, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              "Digite a matrícula para ver o extrato.",
+              style: TextStyle(color: Colors.grey),
             ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            t.tipo == 'entrada'
-                ? CupertinoIcons.arrow_down_circle_fill
-                : CupertinoIcons.arrow_up_circle_fill,
-            color: t.tipo == 'entrada' ? Colors.greenAccent : Colors.redAccent,
-            size: 28,
+          ],
+        ),
+      );
+    }
+
+    if (_pagamentos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.clear_circled,
+                size: 50, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              "Nenhum pagamento encontrado para este imóvel.",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // LISTA DE PAGAMENTOS
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      itemCount: _pagamentos.length,
+      itemBuilder: (context, index) {
+        final pagamento = _pagamentos[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _buildPaymentCard(pagamento, primaryColor, isDark),
+        );
+      },
+    );
+  }
+
+  // --- CARD DE PAGAMENTO (Apple Style) ---
+  Widget _buildPaymentCard(PagamentoModel p, Color primaryColor, bool isDark) {
+    // Definição de cores baseada no status
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (p.status.toLowerCase()) {
+      case 'pago':
+        statusColor = CupertinoColors.activeGreen;
+        statusIcon = CupertinoIcons.checkmark_circle_fill;
+        break;
+      case 'atrasado':
+        statusColor = CupertinoColors.systemRed;
+        statusIcon = CupertinoIcons.exclamationmark_circle_fill;
+        break;
+      case 'pendente':
+        statusColor = CupertinoColors.systemOrange;
+        statusIcon = CupertinoIcons.clock_fill;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusIcon = CupertinoIcons.question_circle_fill;
+    }
+
+    return GestureDetector(
+      onTap: () async {
+        final bool? result = await Navigator.push(
+          context,
+          CupertinoPageRoute(
+            builder: (context) => PagamentoDetailsPage(pagamento: p),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        );
+
+        if (result == true) {
+          _searchPagamentos();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white10 : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+          border:
+              Border.all(color: isDark ? Colors.white12 : Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            // Linha Superior: Tipo e Valor
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(t.titulo,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(DateFormat('dd/MM/yyyy').format(t.data),
-                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                          p.tipo.toLowerCase() == 'multa'
+                              ? CupertinoIcons.exclamationmark_triangle
+                              : CupertinoIcons.house_fill,
+                          size: 18,
+                          color: primaryColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.tipo.toUpperCase(), // "ALUGUEL", "MULTA"
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade600,
+                              letterSpacing: 0.5),
+                        ),
+                        Text(
+                          "Parcela ${p.numeroPagamento}",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, color: primaryColor),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Text(
+                  currencyFormat.format(p.valor),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formato.format(t.valor),
-                style: TextStyle(
-                    color: t.tipo == 'entrada'
-                        ? Colors.greenAccent
-                        : Colors.redAccent,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.0),
+              child: Divider(height: 1),
+            ),
+
+            // Linha Inferior: Datas e Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Vencimento",
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey.shade500)),
+                    const SizedBox(height: 2),
+                    Text(
+                      dateFormat.format(p.dataVencimento),
+                      style: TextStyle(
+                          color: primaryColor, fontWeight: FontWeight.w500),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  t.status.toUpperCase(),
-                  style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold),
+
+                // Badge de Status
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(statusIcon, size: 14, color: statusColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        p.status.toUpperCase(),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

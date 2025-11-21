@@ -38,12 +38,12 @@ class Endpoints {
   static const String userUploadPicture = '/usuario/upload_foto_perfil';
 
   // Rotas de Pagamentos (f)
-  static const String pagamentosCadastro = '/pagamentos/cadastro';
-  static const String pagamentosStatus = '/pagamentos/status';
-  static const String pagamentosAtualizaStatus = '/pagamentos/atualiza_status';
-  static const String pagamentosExtratoImovel = '/pagamentos/extrato-imovel';
+  static const String pagamentosCadastro = '/pagamento/cadastro';
+  static const String pagamentosStatus = '/pagamento/status';
+  static const String pagamentosAtualizaStatus = '/pagamento/atualiza_status';
+  static const String pagamentosExtratoImovel = '/pagamento/extrato-imovel';
   static const String pagamentosExtratoAdquirente =
-      '/pagamentos/extrato-adquirente';
+      '/pagamento/extrato-adquirente';
 
   // Rotas de contrato (f)
   static const String contratoPrazo = '/contratos/prazo';
@@ -54,7 +54,12 @@ class Endpoints {
       '/contratos/obter-periodo-aluguel';
 
   // Contrato de consulta/relatório
-  static const String contratoAluguelAtivo = '/contratos/alugueis-ativos';
+  static const String contratosAtivos = '/contratos/ativos';
+  static const String contratosVencendo = '/contratos/vencendo';
+  static const String contratosAtrasados = '/contratos/atrasados';
+  static const String contratosList = '/contratos'; // Rota da Lista
+  static const String contratosDashboard = '/contratos/dashboard';
+
   static const String contratoValoresImovel = '/contratos/obter-valores-imovel';
   static const String contratoMaisAlugados = '/contratos/obter-mais-alugados';
   static const String contratoPessoasImovel = '/contratos/obter-pessoas-imovel';
