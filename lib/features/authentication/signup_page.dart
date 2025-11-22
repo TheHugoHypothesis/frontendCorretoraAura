@@ -105,7 +105,7 @@ class _SignUpPageState extends State<SignUpPage> {
   // Controles de Checkbox
   bool _isProprietario = false;
   bool _isAdquirente = false;
-  bool _isCorretor = false;
+  bool _isCorretor = true;
 
   // Controle de visibilidade de senha
   bool _isPasswordVisible = false;
@@ -158,8 +158,8 @@ class _SignUpPageState extends State<SignUpPage> {
           telefonesLimpos, // Python espera 'telefones' (lista separada por vírgula)
 
       // FLAGS DE TIPO (Python espera 'proprietario', 'adquirente', 'corretor')
-      'proprietario': _isProprietario, // Boolean True/False
-      'adquirente': _isAdquirente, // Boolean True/False
+      'proprietario': false, // Boolean True/False
+      'adquirente': false, // Boolean True/False
       'corretor': _isCorretor, // Boolean True/False
 
       // CAMPOS CONDICIONAIS (Se a flag for True)
@@ -456,41 +456,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Checkbox Proprietário
-                  _buildCheckboxTile(
-                    theme: theme,
-                    title: "Proprietário",
-                    subtitle: "Possui ou deseja vender/alugar imóveis.",
-                    value: _isProprietario,
-                    onChanged: (val) => setState(() => _isProprietario = val),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Checkbox Adquirente
-                  _buildCheckboxTile(
-                    theme: theme,
-                    title: "Adquirente",
-                    subtitle:
-                        "Deseja comprar ou alugar imóveis (Inquilino/Comprador).",
-                    value: _isAdquirente,
-                    onChanged: (val) => setState(() => _isAdquirente = val),
-                  ),
-
-                  // Campos Dinâmicos do Adquirente
-                  if (_isAdquirente) ...[
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: _pontuacaoCreditoController,
-                      hintText: "Pontuação de Crédito (Ex: 850)",
-                      icon: CupertinoIcons.chart_bar_fill,
-                      keyboardType: TextInputType.number,
-                      theme: theme,
-                      fieldColor: fieldColor,
-                      primaryColor: primaryColor,
-                    ),
-                  ],
-                  const SizedBox(height: 12),
 
                   // Checkbox Corretor
                   _buildCheckboxTile(
