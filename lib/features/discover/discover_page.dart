@@ -5,7 +5,6 @@ import 'package:aura_frontend/features/home/propriety_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../widgets/notifications_modal.dart';
 import '../../routes/app_routes.dart';
 
 class DiscoverPage extends StatefulWidget {
@@ -29,12 +28,46 @@ class _DiscoverPageState extends State<DiscoverPage> {
   bool _isLoading = false;
   bool _hasLoadedInitial = false;
 
+  Map<String, dynamic> lastFilter = new Map();
+
   @override
   void initState() {
     super.initState();
 
     // Adiciona o ouvinte para filtrar enquanto digita
     _searchController.addListener(_onSearchChanged);
+
+    final Map<String, dynamic> defaultFilters = {
+      'valorMin': 100000,
+      'valorMax': 1000000,
+      'cep': '',
+      'cidade': '',
+      'bairroSelecionado': null,
+      'logradouro': '',
+      'proprietarioCpf': '',
+      'matricula': '',
+      'metragemMin': null,
+      'metragemMax': null,
+      'numQuartos': 1,
+      'numReformas': 0,
+      'tipo': null,
+      'finalidade': null,
+      'possuiGaragem': false,
+      'mobiliado': false,
+      'comodidades': {
+        'Piscina': false,
+        'Churrasqueira': false,
+        'Salão de Festas': false,
+        'Academia': false,
+        'Playground': false,
+        'Portaria 24h': false,
+        'Elevador': false,
+        'Aceita Pet': false,
+        'Ar Condicionado': false,
+        'Varanda': false,
+      }
+    };
+    _fetchImoveis(defaultFilters);
   }
 
   @override
@@ -108,6 +141,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     // Se retornou filtros (usuário clicou em Aplicar), faz a busca
     if (selectedFilters != null && selectedFilters is Map<String, dynamic>) {
       print("Filtros Recebidos: $selectedFilters");
+      lastFilter = selectedFilters;
       _fetchImoveis(selectedFilters);
     }
   }
@@ -235,7 +269,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   ),
                   child: IconButton(
                     onPressed: () => _navigateToFilterPage(),
-                    icon: const Icon(CupertinoIcons.doc_text_search),
+                    icon: const Icon(CupertinoIcons.slider_horizontal_3),
                   ),
                 ),
 
@@ -302,10 +336,18 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               padding: const EdgeInsets.only(bottom: 20),
                               child: PropertyCard(
                                 imovel: imovel,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                      context, AppRoutes.propertyDetails,
-                                      arguments: imovel);
+                                onTap: () async {
+                                  final result = await Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.propertyDetails,
+                                    arguments: imovel,
+                                  );
+
+                                  if (result == true) {
+                                    print(
+                                        "Imóvel editado. Recarregando lista...");
+                                    _fetchImoveis(lastFilter);
+                                  }
                                 },
                               ),
                             );

@@ -152,15 +152,8 @@ class ContractDetailsPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   _infoTile(
                     context,
-                    title: "Adquirente",
-                    value: contrato.cpfAdquirente.toString(),
-                    icon: CupertinoIcons.person_crop_circle_fill,
-                  ),
-                  const SizedBox(height: 10),
-                  _infoTile(
-                    context,
                     title: "Corretor",
-                    value: contrato.cpfAdquirente.toString(),
+                    value: contrato.cpfCorretor.toString(),
                     icon: CupertinoIcons.person_2_square_stack,
                   ),
 

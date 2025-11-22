@@ -1,19 +1,18 @@
 import 'package:aura_frontend/data/models/corretor_model.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
-import 'package:aura_frontend/features/adquirente_management/adquirente_list_page.dart';
 import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/authentication/onboarding_page.dart';
 import 'package:aura_frontend/features/authentication/otp_verification_page.dart';
 import 'package:aura_frontend/features/authentication/password_reset_page.dart';
 import 'package:aura_frontend/features/authentication/privacy_policy.dart';
 import 'package:aura_frontend/features/authentication/signup_page.dart';
+import 'package:aura_frontend/features/client_registration/client_registration_page.dart';
 import 'package:aura_frontend/features/home/home_page.dart';
 import 'package:aura_frontend/features/home/imovel_detail_page.dart';
 import 'package:aura_frontend/features/home/imovel_filter_page.dart';
 import 'package:aura_frontend/features/imovel_registration/imovel_registration_page.dart';
 import 'package:aura_frontend/features/pagamentos/pagamentos_cadastro_page.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
-import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:window_manager/window_manager.dart';
@@ -105,15 +104,11 @@ class MyApp extends StatelessWidget {
         AppRoutes.onboarding: (context) => const OnboardingPage(),
         AppRoutes.propertyRegistration: (context) =>
             const PropertyRegistrationPage(),
-        AppRoutes.gerenciamentoAdquirentes: (context) =>
-            const AdquirenteListPage(),
-
-        AppRoutes.gerenciamentoProprietarios: (context) =>
-            const ProprietarioListPage(),
-
         AppRoutes.perfilCorretor: (context) => const CorretorProfilePage(),
         AppRoutes.pagamentosCadastro: (context) =>
-            const PagamentoRegistrationPage()
+            const PagamentoRegistrationPage(),
+        AppRoutes.perfilCadastroCliente: (context) =>
+            const ClientRegistrationPage(),
       },
       onGenerateRoute: (settings) {
         switch (settings.name) {

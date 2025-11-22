@@ -82,6 +82,18 @@ class ImovelRepository {
     return responseData;
   }
 
+  Future<void> updateImovel(ImovelModel imovel) async {
+    try {
+      await _apiClient.put(
+        Endpoints.imoveisUpdate,
+        imovel.toJson(),
+        requireAuth: true,
+      );
+    } catch (e) {
+      throw Exception("Falha ao atualizar imóvel: $e");
+    }
+  }
+
   Future<Map<String, dynamic>> uploadImovelFotos(
       String matricula, List<File> fotos) async {
     final responseData = await _apiClient.uploadMultipleFiles(

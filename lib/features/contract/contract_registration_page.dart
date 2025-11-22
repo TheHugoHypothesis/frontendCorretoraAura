@@ -198,16 +198,16 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
         _cpfProprietarioController.text.replaceAll(RegExp(r'[^0-9]'), '');
     // 3. Criação do Modelo
     final novoContrato = ContratoModel(
-      codigo: 0,
-      valor: _valorController.numberValue,
-      status: _statusController.text,
-      tipo: _tipoContrato,
-      dataInicio: _dataInicio!,
-      dataFim: _dataFim!,
-      matriculaImovel: _matriculaImovelController.text.trim(),
-      cpfAdquirente: cpfAdqLimpo,
-      cpfProprietario: cpfPropLimpo,
-    );
+        codigo: 0,
+        valor: _valorController.numberValue,
+        status: _statusController.text,
+        tipo: _tipoContrato,
+        dataInicio: _dataInicio!,
+        dataFim: _dataFim!,
+        matriculaImovel: _matriculaImovelController.text.trim(),
+        cpfAdquirente: cpfAdqLimpo,
+        cpfProprietario: cpfPropLimpo,
+        cpfCorretor: "");
 
     try {
       final novoCodigo =

@@ -4,10 +4,8 @@ import 'package:aura_frontend/features/pagamentos/pagamentos_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-// ⚠️ Importa a nova página de conteúdo (DiscoverPage) e os outros módulos
 import '../discover/discover_page.dart';
 import '../../widgets/bottom_nav.dart';
-import '../../data/mocks/corretor_mock.dart'; // Para instanciar o perfil
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -24,8 +22,7 @@ class _HomePageState extends State<HomePage> {
     const DiscoverPage(),
     const ContratoListPage(), // Usando o nome de classe limpo
     const PagamentosListPage(), // Usando o nome de classe limpo
-    const SelecaoSubabaPage(
-        corretor: mockCorretor), // Perfil (Exemplo de dado dinâmico)
+    const SelecaoSubabaPage(), // Perfil (Exemplo de dado dinâmico)
   ];
 
   void _onItemTapped(int index) {

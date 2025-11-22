@@ -29,6 +29,7 @@ class Endpoints {
 
   // Rotas de usuario (f)
   static const String usuarioCadastro = '/usuario/cadastro';
+  static const String usuarioCadastroCliente = '/usuario/cadastro-cliente';
   static const String usuarioTelefone = '/usuario/telefones';
   static const String usuarioDeleta = '/usuario/deleta';
   static const String usuarioPerfisImoveis = '/usuario/perfis-imoveis';

@@ -23,6 +23,8 @@ class AppRoutes {
   static const String propertyPerformance = '/imovel/performance';
   static const String filters = '/imovel/filtros';
 
+  static const String perfilCadastroCliente = '/perfil/cadastro';
+
   static const String gerenciamentoAdquirentes = 'gerenciamento/adquirentes';
   static const String gerenciamentoProprietarios =
       'gerenciamento/proprietarios';

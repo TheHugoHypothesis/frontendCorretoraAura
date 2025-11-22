@@ -9,6 +9,7 @@ class ContratoModel {
   final DateTime dataFim;
   final String matriculaImovel;
   final String cpfProprietario;
+  final String cpfCorretor;
   final String cpfAdquirente;
 
   const ContratoModel({
@@ -20,6 +21,7 @@ class ContratoModel {
     required this.tipo,
     required this.matriculaImovel,
     required this.cpfProprietario,
+    required this.cpfCorretor,
     required this.cpfAdquirente,
   });
 
@@ -41,8 +43,9 @@ class ContratoModel {
           json['matricula_imovel']?.toString() ??
           '',
 
-      cpfProprietario: json['CPF_prop'] ?? '',
-      cpfAdquirente: json['CPF_adq'] ?? '',
+      cpfProprietario: json['cpf_prop'] ?? '',
+      cpfCorretor: json['cpf_corretor'] ?? '',
+      cpfAdquirente: json['cpf_adquirente'] ?? '',
     );
   }
 
@@ -56,8 +59,9 @@ class ContratoModel {
       'data_fim': dataFim.toIso8601String().split('T').first,
       'tipo': tipo,
       'matricula_imovel': matriculaImovel,
-      'CPF_prop': cpfProprietario,
-      'CPF_adq': cpfAdquirente,
+      'cpf_prop': cpfProprietario,
+      'cpf_corretor': cpfCorretor,
+      'cpf_adquirente': cpfAdquirente
     };
   }
 

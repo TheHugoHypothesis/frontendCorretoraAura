@@ -1,15 +1,11 @@
-import 'package:aura_frontend/features/adquirente_management/adquirente_list_page.dart';
 import 'package:aura_frontend/features/profile/corretor_profile_page.dart';
-import 'package:aura_frontend/features/proprietario_management/proprietario_list_page.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 // Exemplo: você pode receber o corretor logado via parâmetro
 class SelecaoSubabaPage extends StatelessWidget {
-  final dynamic corretor; // pode ser CorretorModel, se desejar tipar
-
-  const SelecaoSubabaPage({super.key, required this.corretor});
+  const SelecaoSubabaPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -122,30 +118,18 @@ class SelecaoSubabaPage extends StatelessWidget {
                       Navigator.pushNamed(
                         context,
                         AppRoutes.perfilCorretor,
-                        arguments: corretor,
                       );
-                    },
-                  ),
-
-                  // --- BOTÃO: LISTAGEM DE PROPRIETÁRIOS ---
-                  _buildOptionTile(
-                    title: 'Proprietários',
-                    subtitle: 'Gerencie e consulte seus proprietários',
-                    icon: CupertinoIcons.house_fill,
-                    onTap: () {
-                      Navigator.pushNamed(
-                          context, AppRoutes.gerenciamentoProprietarios);
                     },
                   ),
 
                   // --- BOTÃO: LISTAGEM DE ADQUIRENTES ---
                   _buildOptionTile(
-                    title: 'Adquirentes',
-                    subtitle: 'Acompanhe seus clientes interessados',
+                    title: 'Adquirentes e Proprietários',
+                    subtitle: 'Cadastre Adquirentes e Proprietários',
                     icon: CupertinoIcons.person_2_fill,
                     onTap: () {
                       Navigator.pushNamed(
-                          context, AppRoutes.gerenciamentoAdquirentes);
+                          context, AppRoutes.perfilCadastroCliente);
                     },
                   ),
 

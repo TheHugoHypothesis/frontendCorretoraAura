@@ -53,9 +53,15 @@ class ContratosRepository {
     }
   }
 
-  Future<List<ContratoModel>> getContratosGerais() async {
+  Future<List<ContratoModel>> getContratosGerais({int? limit}) async {
+    final Map<String, dynamic> queryParams = {};
+    if (limit != null) {
+      queryParams['limit'] = limit.toString();
+    }
+
     final response = await _apiClient.get(
       Endpoints.contratosList,
+      queryParams: queryParams,
       requireAuth: true,
     );
     if (response is List) {

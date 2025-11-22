@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:aura_frontend/features/home/imovel_performance_page.dart';
 import 'package:aura_frontend/features/imovel_details/imovel_history_page.dart';
 import 'package:aura_frontend/widgets/favorite_button.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/models/imovel_model.dart';
 import '../../data/models/contrato_model.dart';
+import 'package:aura_frontend/features/imovel_details/imovel_edit_page.dart';
 import 'package:intl/intl.dart';
 
 class PropertyPage extends StatefulWidget {
@@ -30,6 +30,19 @@ class _PropertyPageState extends State<PropertyPage> {
             ImovelHistoryPage(matricula: widget.imovel.matricula),
       ),
     );
+  }
+
+  void _navigateToEdit(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => ImovelEditPage(imovel: widget.imovel),
+      ),
+    );
+
+    if (result == true && mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   void _nextImage() {
@@ -223,9 +236,7 @@ class _PropertyPageState extends State<PropertyPage> {
                             letterSpacing: -0.5,
                           ),
                         ),
-                      ),
-                      Icon(CupertinoIcons.bookmark,
-                          color: Colors.grey.shade400),
+                      )
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -272,7 +283,7 @@ class _PropertyPageState extends State<PropertyPage> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Este imóvel está atualmente com status: ${widget.imovel.statusOcupacao}. Localizado em uma região privilegiada, ideal para ${widget.imovel.finalidade}.',
+                    '${widget.imovel.descricao}\n\nStatus do Imóvel: ${widget.imovel.statusOcupacao}.\nLocalizado em uma região privilegiada, ideal para ${widget.imovel.finalidade}.',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.black87,
                       height: 1.5,
@@ -342,8 +353,8 @@ class _PropertyPageState extends State<PropertyPage> {
               ),
               const Spacer(),
               ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(CupertinoIcons.building_2_fill),
+                onPressed: () => _navigateToEdit(context),
+                icon: const Icon(CupertinoIcons.pencil),
                 label: const Text("Editar Imóvel"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,

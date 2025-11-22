@@ -17,9 +17,12 @@ class ContratoListPage extends StatefulWidget {
 
 class _ContratoListPageState extends State<ContratoListPage> {
   final ContratosRepository _repository = ContratosRepository();
+  final TextEditingController _searchController = TextEditingController();
 
   List<ContratoModel> _contratosList = [];
+  List<ContratoModel> _filteredContratos = [];
   bool _isLoading = true;
+  int _currentLimit = 10;
 
   // Estatísticas
   int _ativos = 0;
@@ -30,13 +33,38 @@ class _ContratoListPageState extends State<ContratoListPage> {
   void initState() {
     super.initState();
     _fetchData();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase().trim();
+
+    setState(() {
+      if (query.isEmpty) {
+        _filteredContratos = List.from(_contratosList);
+      } else {
+        _filteredContratos = _contratosList.where((contrato) {
+          final matricula = contrato.matriculaImovel.toLowerCase();
+          return matricula.contains(query) ||
+              contrato.codigo.toString().contains(query);
+        }).toList();
+      }
+    });
   }
 
   Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+
     try {
       final results = await Future.wait([
         _repository.getDashboardStats(),
-        _repository.getContratosGerais(),
+        _repository.getContratosGerais(limit: _currentLimit),
       ]);
 
       if (mounted) {
@@ -47,6 +75,11 @@ class _ContratoListPageState extends State<ContratoListPage> {
           _atrasados = stats['atrasados'] ?? 0;
 
           _contratosList = results[1] as List<ContratoModel>;
+          if (_searchController.text.isNotEmpty) {
+            _onSearchChanged();
+          } else {
+            _filteredContratos = List.from(_contratosList);
+          }
 
           _isLoading = false;
         });
@@ -57,6 +90,44 @@ class _ContratoListPageState extends State<ContratoListPage> {
         debugPrint("Erro ao carregar dados: $e");
       }
     }
+  }
+
+  void _showLimitPicker() {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Quantidade de Registros'),
+        message: const Text('Quantos contratos recentes você deseja carregar?'),
+        actions: [
+          _buildLimitAction(10),
+          _buildLimitAction(30),
+          _buildLimitAction(50),
+          _buildLimitAction(100), // "Todos" ou um número alto
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          child: const Text('Cancelar'),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+    );
+  }
+
+  CupertinoActionSheetAction _buildLimitAction(int value) {
+    return CupertinoActionSheetAction(
+      child: Text('$value Contratos',
+          style: TextStyle(
+              fontWeight:
+                  _currentLimit == value ? FontWeight.bold : FontWeight.normal,
+              color: Colors.black)),
+      onPressed: () {
+        Navigator.pop(context);
+        if (_currentLimit != value) {
+          // Atualiza o limite e recarrega os dados
+          setState(() => _currentLimit = value);
+          _fetchData();
+        }
+      },
+    );
   }
 
   void _navigateToContractRegistration(BuildContext context) async {
@@ -71,7 +142,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
 
   // --- LÓGICA DO GRÁFICO ---
 
-  // Gera os pontos do gráfico (Últimos 6 meses)
   List<FlSpot> _getChartSpots() {
     if (_contratosList.isEmpty) return [const FlSpot(0, 0), const FlSpot(5, 0)];
 
@@ -123,6 +193,7 @@ class _ContratoListPageState extends State<ContratoListPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.primaryColor;
+    final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
 
     final currencyFormat = NumberFormat.simpleCurrency(locale: 'pt_BR');
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -168,7 +239,34 @@ class _ContratoListPageState extends State<ContratoListPage> {
               ],
             ),
           ),
-
+          // BARRA DE PESQUISA
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: fieldColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(CupertinoIcons.search, color: Colors.grey.shade500),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      style: theme.textTheme.bodyMedium,
+                      decoration: const InputDecoration(
+                        hintText: "Buscar contrato por código ou imóvel...",
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           // CONTEÚDO
           Expanded(
             child: _isLoading
@@ -298,32 +396,52 @@ class _ContratoListPageState extends State<ContratoListPage> {
 
                         const SizedBox(height: 32),
 
-                        // --- LISTA DE CONTRATOS ---
-                        Text(
-                          "Últimos Registros",
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Recentes",
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold)),
 
-                        if (_contratosList.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(40.0),
-                            child: Center(
-                              child: Column(
+                            // BOTÃO PARA MUDAR O LIMITE
+                            CupertinoButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: _showLimitPicker, // Abre o seletor
+                              child: Row(
                                 children: [
-                                  Icon(CupertinoIcons.doc_text_search,
-                                      size: 40, color: Colors.grey.shade400),
-                                  const SizedBox(height: 10),
-                                  const Text("Nenhum contrato encontrado.",
-                                      style: TextStyle(color: Colors.grey)),
+                                  Text("Ver $_currentLimit",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 14)),
+                                  Icon(CupertinoIcons.chevron_down,
+                                      size: 14, color: Colors.grey.shade600)
                                 ],
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // --- LISTA DE CONTRATOS ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (_searchController.text.isNotEmpty)
+                              Text("${_filteredContratos.length} encontrados",
+                                  style: const TextStyle(
+                                      color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        if (_filteredContratos.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Center(
+                                child: Text("Nenhum contrato encontrado.")),
                           )
                         else
-                          ..._contratosList.take(10).map((contrato) {
-                            // Mostra apenas os 10 últimos na lista inicial
+                          ..._filteredContratos.map((contrato) {
                             final statusColor = contrato.tipo == 'Aluguel'
                                 ? primaryColor
                                 : Colors.orange;
