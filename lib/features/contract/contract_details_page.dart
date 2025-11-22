@@ -158,36 +158,6 @@ class ContractDetailsPage extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 40),
-
-                  // ==== BOTÃO: PAGAMENTOS ====
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: CupertinoButton(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(16),
-                      onPressed: () => _navigateToPayments(context),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            CupertinoIcons.creditcard_fill,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Ver Pagamentos",
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
                 ],
               ),
             ),

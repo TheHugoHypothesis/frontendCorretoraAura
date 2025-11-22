@@ -1,3 +1,4 @@
+import 'package:aura_frontend/core/repositorios/authentication_repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,11 +63,11 @@ Widget _buildSectionHeader(ThemeData theme, String title) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 8.0, top: 24.0, left: 4.0),
     child: Text(
-      title, // Mantendo capitalização conforme seu gosto (ou use .toUpperCase())
+      title,
       style: theme.textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.w700,
         color: theme.colorScheme.onSurface,
-        fontSize: 14, // Ajuste fino para ficar igual ao seu
+        fontSize: 14,
       ),
     ),
   );
@@ -135,10 +136,12 @@ class ContractRegistrationPage extends StatefulWidget {
 class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
   // --- REPOSITÓRIO ---
   final ContratosRepository _contratosRepository = ContratosRepository();
+  final AuthenticationRepository _authRepository = AuthenticationRepository();
+
   bool _isLoading = false;
+  String _cpfCorretorLogado = "";
 
   // --- CONTROLADORES ---
-  final TextEditingController _codigoController = TextEditingController();
   final TextEditingController _matriculaImovelController =
       TextEditingController();
   final TextEditingController _cpfAdquirenteController =
@@ -146,7 +149,6 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
   final TextEditingController _cpfProprietarioController =
       TextEditingController();
 
-  // Money Controller para facilitar R$
   final MoneyMaskedTextController _valorController = MoneyMaskedTextController(
     decimalSeparator: ',',
     thousandSeparator: '.',
@@ -157,25 +159,39 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
   final TextEditingController _statusController =
       TextEditingController(text: 'Ativo');
 
-  // --- VARIÁVEIS DE ESTADO ---
   String _tipoContrato = 'Aluguel';
   final List<String> _tiposContratoDisponiveis = ['Aluguel', 'Venda'];
 
   DateTime? _dataInicio;
   DateTime? _dataFim;
 
-  // --- FORMATADORES ---
   final cpfFormatter = MaskTextInputFormatter(
       mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
-  // --- AÇÕES ---
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final profile = await _authRepository.loadProfile();
+      if (profile != null && mounted) {
+        setState(() {
+          _cpfCorretorLogado = profile.cpf;
+        });
+      }
+    } catch (e) {
+      print("Erro ao carregar perfil: $e");
+    }
+  }
 
   void _handleContractRegistration() async {
     if (_isLoading) return;
 
-    // 1. Validações
     if (_matriculaImovelController.text.isEmpty ||
         _cpfAdquirenteController.text.isEmpty ||
         _cpfProprietarioController.text.isEmpty ||
@@ -191,24 +207,23 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
 
     setState(() => _isLoading = true);
 
-    // 2. Limpeza de Dados
-    final cpfAdqLimpo = cpfFormatter.getUnmaskedText();
-    // Para o proprietário, removemos manualmente pois o formatter pode estar atrelado ao outro campo
+    final cpfAdqLimpo =
+        _cpfAdquirenteController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final cpfPropLimpo =
         _cpfProprietarioController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    // 3. Criação do Modelo
-    final novoContrato = ContratoModel(
-        codigo: 0,
-        valor: _valorController.numberValue,
-        status: _statusController.text,
-        tipo: _tipoContrato,
-        dataInicio: _dataInicio!,
-        dataFim: _dataFim!,
-        matriculaImovel: _matriculaImovelController.text.trim(),
-        cpfAdquirente: cpfAdqLimpo,
-        cpfProprietario: cpfPropLimpo,
-        cpfCorretor: "");
 
+    final novoContrato = ContratoModel(
+      codigo: 0, // Backend gera
+      valor: _valorController.numberValue,
+      status: _statusController.text,
+      tipo: _tipoContrato,
+      dataInicio: _dataInicio!,
+      dataFim: _dataFim!,
+      matriculaImovel: _matriculaImovelController.text.trim(),
+      cpfAdquirente: cpfAdqLimpo,
+      cpfProprietario: cpfPropLimpo,
+      cpfCorretor: _cpfCorretorLogado,
+    );
     try {
       final novoCodigo =
           await _contratosRepository.cadastrarContrato(novoContrato);
@@ -220,7 +235,6 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
           context: context,
           builder: (context) => CupertinoAlertDialog(
             title: const Text("Sucesso"),
-            // Usa o código real gerado pelo banco
             content:
                 Text("Contrato ${novoCodigo ?? 'registrado'} com sucesso!"),
             actions: [

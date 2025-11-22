@@ -141,7 +141,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
   }
 
   // --- LÓGICA DO GRÁFICO ---
-
   List<FlSpot> _getChartSpots() {
     if (_contratosList.isEmpty) return [const FlSpot(0, 0), const FlSpot(5, 0)];
 

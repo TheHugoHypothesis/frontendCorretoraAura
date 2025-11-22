@@ -30,19 +30,14 @@ class ContratoModel {
       codigo: json['codigo'] is int
           ? json['codigo']
           : int.tryParse(json['codigo']?.toString() ?? '0') ?? 0,
-
       valor: (json['valor'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? 'Ativo',
-
       dataInicio: _parseDate(json['data_inicio']),
       dataFim: _parseDate(json['data_fim']),
-
-      tipo: json['tipo'] ?? 'Aluguel', // Default se não vier no JSON
-
+      tipo: json['tipo'] ?? 'Aluguel',
       matriculaImovel: json['matricula']?.toString() ??
           json['matricula_imovel']?.toString() ??
           '',
-
       cpfProprietario: json['cpf_prop'] ?? '',
       cpfCorretor: json['cpf_corretor'] ?? '',
       cpfAdquirente: json['cpf_adquirente'] ?? '',
