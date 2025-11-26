@@ -18,7 +18,6 @@ class _NominatimResult {
 
 // O Serviço que lida com a lógica de chamada de API
 class GeocodingService {
-  // O único método público que o app usará.
   Future<_NominatimResult> geocodeWithNominatim(LatLng coordinates) async {
     final url = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&zoom=18&addressdetails=1');

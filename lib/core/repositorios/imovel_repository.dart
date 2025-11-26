@@ -58,16 +58,15 @@ class ImovelRepository {
     final responseData = await _apiClient.get(
       Endpoints.imoveisFilters,
       queryParams: queryParams,
-      requireAuth: false, // Busca costuma ser pública, ou mude para true
+      requireAuth: false,
     );
 
-    // 3. Mapeia a resposta
     if (responseData is List) {
       return responseData
           .map((json) => ImovelModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } else {
-      // Caso a API retorne algo que não é uma lista (ex: Map vazio por erro)
+      // Caso a API retorne algo que não é uma lista
       return [];
     }
   }

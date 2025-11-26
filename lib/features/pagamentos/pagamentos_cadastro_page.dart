@@ -53,8 +53,6 @@ class _PagamentoRegistrationPageState extends State<PagamentoRegistrationPage> {
   ];
   String _statusSelected = 'Pago';
 
-  // --- WIDGETS AUXILIARES (Estilo B&W Unificado) ---
-
   Widget _buildSectionHeader(String title) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
@@ -80,7 +78,6 @@ class _PagamentoRegistrationPageState extends State<PagamentoRegistrationPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? Colors.white : Colors.black;
 
-    // Estilo Container Cinza Sutil (Igual ao Filtro)
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -284,7 +281,7 @@ class _PagamentoRegistrationPageState extends State<PagamentoRegistrationPage> {
       await _repository.cadastrarPagamento(novoPagamento);
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.pop(context); // Fecha e retorna
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text("Pagamento registrado!"),
             backgroundColor: Colors.green));

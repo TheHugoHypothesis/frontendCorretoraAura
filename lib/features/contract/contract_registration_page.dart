@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:aura_frontend/core/repositorios/contrato_repository.dart';
 import 'package:aura_frontend/data/models/contrato_model.dart';
 
-import 'package:flutter_masked_text2/flutter_masked_text2.dart'; // Para moeda
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
 Widget _buildTextField({
   required TextEditingController controller,
@@ -134,14 +134,12 @@ class ContractRegistrationPage extends StatefulWidget {
 }
 
 class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
-  // --- REPOSITÓRIO ---
   final ContratosRepository _contratosRepository = ContratosRepository();
   final AuthenticationRepository _authRepository = AuthenticationRepository();
 
   bool _isLoading = false;
   String _cpfCorretorLogado = "";
 
-  // --- CONTROLADORES ---
   final TextEditingController _matriculaImovelController =
       TextEditingController();
   final TextEditingController _cpfAdquirenteController =
@@ -213,7 +211,7 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
         _cpfProprietarioController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     final novoContrato = ContratoModel(
-      codigo: 0, // Backend gera
+      codigo: 0,
       valor: _valorController.numberValue,
       status: _statusController.text,
       tipo: _tipoContrato,
@@ -273,8 +271,6 @@ class _ContractRegistrationPageState extends State<ContractRegistrationPage> {
       ),
     );
   }
-
-  // --- PICKERS ---
 
   void _showContractTypePicker() {
     showCupertinoModalPopup(

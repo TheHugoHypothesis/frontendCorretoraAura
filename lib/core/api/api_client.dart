@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'token_manager.dart';
 import 'dart:io';
 
-class ApiClient {
-  static const String baseUrl = 'http://127.0.0.1:8000';
+import 'constants.dart';
 
+class ApiClient {
   Future<dynamic> get(String endpoint,
       {bool requireAuth = false, Map<String, dynamic>? queryParams}) async {
     Uri url = Uri.parse('$baseUrl$endpoint');
@@ -54,7 +54,6 @@ class ApiClient {
 
   Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> body,
       {bool requireAuth = true}) async {
-    // PUTs geralmente requerem autenticação
     final url = Uri.parse('$baseUrl$endpoint');
     final headers = await _buildHeaders(requireAuth);
 
@@ -66,9 +65,7 @@ class ApiClient {
     final response =
         await http.put(url, headers: headers, body: json.encode(body));
     return await _handleResponse(
-        // Adiciona a função de retry para renovar o token em caso de 401
-        response,
-        () => put(endpoint, body, requireAuth: requireAuth));
+        response, () => put(endpoint, body, requireAuth: requireAuth));
   }
 
   Future<dynamic> delete(String endpoint,
@@ -83,7 +80,7 @@ class ApiClient {
 
     final headers = await _buildHeaders(requireAuth);
 
-    print('>>> REQ DELETE: $url'); // Log para debug
+    print('>>> REQ DELETE: $url');
 
     final response = await http.delete(url, headers: headers);
 

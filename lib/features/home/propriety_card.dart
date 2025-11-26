@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
 
 class PropertyCard extends StatelessWidget {
-  final ImovelModel imovel; // 1. Recebe os dados do imóvel
+  final ImovelModel imovel;
   final VoidCallback onTap;
 
   const PropertyCard({
@@ -18,12 +18,10 @@ class PropertyCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Cores do tema B&W
     final backgroundColor = isDark ? Colors.grey.shade900 : Colors.white;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final secondaryColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-    // Tag Hero única para animação suave ao abrir detalhes
     final heroTag = 'property_img_${imovel.matricula}';
 
     return GestureDetector(
@@ -43,7 +41,6 @@ class PropertyCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. ÁREA DA IMAGEM ---
             Stack(
               children: [
                 Hero(
@@ -52,13 +49,11 @@ class PropertyCard extends StatelessWidget {
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(20)),
                     child: AspectRatio(
-                      aspectRatio: 16 / 9, // Proporção retangular padrão
+                      aspectRatio: 16 / 9,
                       child: _buildPropertyImage(isDark),
                     ),
                   ),
                 ),
-
-                // Badge de Status (Venda/Aluguel)
                 Positioned(
                   top: 12,
                   left: 12,
@@ -70,7 +65,6 @@ class PropertyCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      // Exibe a finalidade ou tipo (ex: "RESIDENCIAL")
                       (imovel.finalidade ?? 'IMÓVEL').toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
@@ -83,8 +77,6 @@ class PropertyCard extends StatelessWidget {
                 ),
               ],
             ),
-
-            // --- 2. INFORMAÇÕES ---
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -92,7 +84,7 @@ class PropertyCard extends StatelessWidget {
                 children: [
                   // Preço
                   Text(
-                    imovel.valorVenalFormatado, // Usa o getter do model
+                    imovel.valorVenalFormatado,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: primaryColor,
@@ -108,7 +100,7 @@ class PropertyCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          imovel.enderecoCompleto, // Usa o getter do model
+                          imovel.enderecoCompleto,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium
@@ -139,9 +131,7 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  // Lógica para decidir qual imagem mostrar
   Widget _buildPropertyImage(bool isDark) {
-    // 1. Se o model tem URL válida
     if (imovel.profileImageUrl != null && imovel.profileImageUrl!.isNotEmpty) {
       return Image.network(
         imovel.profileImageUrl!,
@@ -155,13 +145,11 @@ class PropertyCard extends StatelessWidget {
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          // Se falhar ao carregar a URL, mostra placeholder
           return _buildPlaceholder(isDark);
         },
       );
     }
 
-    // 2. Se não tem URL, mostra placeholder
     return _buildPlaceholder(isDark);
   }
 

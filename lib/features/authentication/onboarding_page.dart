@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
 
-  // Função de navegação para Login (ponto de entrada após onboarding)
   void _navigateToLogin(BuildContext context) {
     Navigator.pushNamed(context, AppRoutes.login);
   }
@@ -19,7 +18,6 @@ class OnboardingPage extends StatelessWidget {
     final primaryColor = isDark ? Colors.white : Colors.black;
     final secondaryColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-    // Garante que a barra de status seja clara/escura (coerente com a tela)
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarColor: Colors.transparent,
@@ -31,7 +29,6 @@ class OnboardingPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER: Identificação da Corretora ---
             Padding(
               padding: const EdgeInsets.only(top: 30, left: 30, right: 30),
               child: Row(
@@ -57,24 +54,19 @@ class OnboardingPage extends StatelessWidget {
                 ],
               ),
             ),
-
-            // --- IMAGEM CENTRAL (Mock) ---
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 0, top: 20, bottom: 20),
                   child: Image.asset(
-                    "assets/onboard.png", // Substitua pelo seu asset
+                    "assets/onboard.png",
                     fit: BoxFit.contain,
-                    width: MediaQuery.of(context).size.width *
-                        0.85, // Dá mais largura à imagem
+                    width: MediaQuery.of(context).size.width * 0.85,
                   ),
                 ),
               ),
             ),
-
-            // --- CONTEÚDO PRINCIPAL: Proposta de Valor ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
               child: Column(
@@ -93,10 +85,7 @@ class OnboardingPage extends StatelessWidget {
                       "Gerencie imóveis, contratos e pagamentos com precisão. A plataforma de BI e suporte que seu negócio imobiliário exige.",
                       style: theme.textTheme.bodyLarge
                           ?.copyWith(color: secondaryColor, height: 1.5)),
-
                   const SizedBox(height: 40),
-
-                  // --- BOTÕES DE AÇÃO (Cupertino Style) ---
                   SizedBox(
                     width: double.infinity,
                     child: CupertinoButton(
@@ -113,13 +102,10 @@ class OnboardingPage extends StatelessWidget {
                         )),
                   ),
                   const SizedBox(height: 20),
-
-                  // Botão Secundário (para quem não tem conta)
                   Center(
                     child: CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () {
-                        // Navega para o Cadastro
                         Navigator.pushNamed(context, AppRoutes.signUp);
                       },
                       child: Text(

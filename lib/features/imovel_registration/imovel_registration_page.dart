@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
-import 'dart:io'; // Para o tipo File
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:aura_frontend/core/repositorios/imovel_repository.dart';
@@ -58,9 +58,7 @@ Widget _buildTextField({
                     ? Colors.grey.shade500
                     : Colors.grey.shade600,
               ),
-              // 🚨 APLICAÇÃO DO SUFIXO AQUI:
               suffixText: suffixText,
-              // Estilo opcional para o sufixo (para deixá-lo discreto, se necessário)
               suffixStyle: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.brightness == Brightness.dark
                     ? Colors.grey
@@ -144,10 +142,10 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
   final TextEditingController _matriculaController = TextEditingController();
   final MoneyMaskedTextController _valorVenalController =
       MoneyMaskedTextController(
-    decimalSeparator: ',', // Vírgula para decimal
-    thousandSeparator: '.', // Ponto para milhar
-    leftSymbol: 'R\$ ', // Símbolo do Real
-    precision: 2, // Duas casas decimais
+    decimalSeparator: ',',
+    thousandSeparator: '.',
+    leftSymbol: 'R\$ ',
+    precision: 2,
   );
   final TextEditingController _metragemController = TextEditingController();
 
@@ -165,8 +163,8 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
       TextEditingController();
 
   // Seletores (Cupertino-style)
-  String? _tipoImovel; // Casa, Apartamento, Sala Comercial, etc.
-  String? _finalidade; // Residencial ou Comercial
+  String? _tipoImovel;
+  String? _finalidade;
 
   // Opções Binárias
   bool _possuiGaragem = false;
@@ -201,7 +199,7 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     FilteringTextInputFormatter.allow(RegExp(r'[0-9,]')),
   ];
 
-  // Tipos de Imóveis disponíveis (para o seletor)
+  // Tipos de Imóveis disponíveis
   final List<String> _tiposDisponiveis = [
     'Apartamento',
     'Casa',
@@ -220,7 +218,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
       setState(() {
         _propertyImages.add(imageFile);
       });
-      // Opcional: Notificação de sucesso
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nova imagem adicionada!')),
@@ -339,8 +336,8 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
               CupertinoDialogAction(
                 child: const Text("OK"),
                 onPressed: () {
-                  Navigator.pop(context); // Fecha alerta
-                  Navigator.pop(context); // Volta para a tela anterior (Home)
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 },
               ),
             ],
@@ -432,19 +429,17 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            flex: 2, // Dá um pouco mais de peso ao título
+            flex: 2,
             child: Row(
               children: [
                 Icon(icon, color: textColor, size: 20),
-                const SizedBox(width: 8), // Reduzido o espaço
+                const SizedBox(width: 8),
                 Flexible(
-                  // Garante que o texto encolha
                   child: Text(
                     title,
                     style:
                         theme.textTheme.bodyLarge?.copyWith(color: textColor),
-                    overflow: TextOverflow
-                        .ellipsis, // Opcional: Trunca se for muito longo
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -529,7 +524,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- SEÇÃO 1: IDENTIFICAÇÃO E VALORES ---
                   _buildSectionHeader(theme, "Identificação e Valores"),
                   const SizedBox(height: 16),
 
@@ -568,7 +562,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                   ),
                   const SizedBox(height: 30),
 
-                  // --- SEÇÃO 2: CARACTERÍSTICAS BÁSICAS ---
                   _buildSectionHeader(theme, "Características Principais"),
                   const SizedBox(height: 16),
 
@@ -609,7 +602,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                   // Números (Quartos, Metragem, Reformas)
                   Row(
                     children: [
-                      // QUARTOS (USANDO STEPPER)
                       Expanded(
                         child: _buildStepperField(
                           theme: theme,
@@ -617,7 +609,7 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                           value: _numQuartos,
                           onChanged: (newVal) =>
                               setState(() => _numQuartos = newVal),
-                          minimum: 1, // Mínimo de 1 quarto
+                          minimum: 1,
                           icon: CupertinoIcons.bed_double,
                         ),
                       ),
@@ -655,7 +647,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- SEÇÃO 3: INFRAESTRUTURA E COMODIDADES ---
                   _buildSectionHeader(theme, "Comodidades e Infraestrutura"),
                   const SizedBox(height: 16),
 
@@ -708,46 +699,42 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- SEÇÃO 4: ENDEREÇO (Seleção por Mapa/Manual) ---
-                  _buildSectionHeader(
-                      theme, "Endereço (Mapa ou Manual)"), // Título atualizado
+                  _buildSectionHeader(theme, "Endereço (Mapa ou Manual)"),
                   const SizedBox(height: 16),
 
-                  // 1. Botão/Selector que abre o mapa
                   _buildPickerSelector(
                     theme: theme,
                     title: "Localização no Mapa",
-                    // Mostra o endereço completo preenchido
                     value: _logradouroController.text.isNotEmpty
                         ? "${_logradouroController.text}, ${_bairroController.text} - ${_cidadeController.text}"
                         : "Toque para selecionar no mapa...",
                     icon: CupertinoIcons.map_pin_ellipse,
-                    onTap: _openMapPicker, // Chama a função que abre o mapa
+                    onTap: _openMapPicker,
                   ),
                   const SizedBox(height: 12),
 
-                  // LINHA 1: CEP e Bairro (AGORA EDITÁVEIS)
                   Row(
                     children: [
                       Expanded(
                         child: _buildTextField(
                           controller: _cepController,
-                          hintText: "CEP", // Hint simples
+                          hintText: "CEP",
                           icon: CupertinoIcons.location_solid,
                           keyboardType: TextInputType.number,
                           inputFormatters: [cepMaskFormatter],
-                          theme: theme, fieldColor: fieldColor,
+                          theme: theme,
+                          fieldColor: fieldColor,
                           primaryColor: primaryColor,
-                          // REMOVIDO: enabled: false
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildTextField(
                           controller: _bairroController,
-                          hintText: "Bairro", // Hint simples
+                          hintText: "Bairro",
                           icon: CupertinoIcons.placemark_fill,
-                          theme: theme, fieldColor: fieldColor,
+                          theme: theme,
+                          fieldColor: fieldColor,
                           primaryColor: primaryColor,
                         ),
                       ),
@@ -755,28 +742,26 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // CIDADE e LOGRADOURO (AGORA EDITÁVEIS)
                   _buildTextField(
                     controller: _cidadeController,
-                    hintText: "Cidade", // Hint simples
+                    hintText: "Cidade",
                     icon: CupertinoIcons.building_2_fill,
-                    theme: theme, fieldColor: fieldColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
                     primaryColor: primaryColor,
-                    // REMOVIDO: enabled: false
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _logradouroController,
-                    hintText: "Logradouro", // Hint simples
+                    hintText: "Logradouro",
                     icon: CupertinoIcons.square_stack_fill,
-                    theme: theme, fieldColor: fieldColor,
+                    theme: theme,
+                    fieldColor: fieldColor,
                     primaryColor: primaryColor,
-                    // REMOVIDO: enabled: false
                   ),
 
                   const SizedBox(height: 12),
 
-                  // LINHA 2: Número e Complemento (Já estavam manuais)
                   Row(
                     children: [
                       Expanded(
@@ -814,7 +799,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                     height: 56,
                     child: CupertinoButton(
                       color: primaryColor,
-                      // Desabilita se estiver carregando
                       onPressed:
                           _isLoading ? null : _handlePropertyRegistration,
                       borderRadius: BorderRadius.circular(14),
@@ -903,10 +887,9 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Botão de Adicionar Imagem
         CupertinoButton(
           padding: EdgeInsets.zero,
-          onPressed: _pickImages, // Chama a função de pick real
+          onPressed: _pickImages,
           child: Container(
             height: 48,
             width: double.infinity,
@@ -934,10 +917,7 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
             ),
           ),
         ),
-
         const SizedBox(height: 16),
-
-        // 2. Visualização das Miniaturas (Scroll Horizontal)
         if (_propertyImages.isNotEmpty)
           SizedBox(
             height: thumbnailHeight,
@@ -952,15 +932,13 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                       right: index == _propertyImages.length - 1 ? 0 : 12),
                   child: Stack(
                     children: [
-                      // Miniatura (AGORA USA Image.file)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.file(
-                          imageFile, // Exibe o arquivo real
+                          imageFile,
                           width: thumbnailHeight * 1.2,
                           height: thumbnailHeight,
                           fit: BoxFit.cover,
-                          // Placeholder para caso o arquivo não carregue
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: isDark
@@ -976,8 +954,6 @@ class _PropertyRegistrationPageState extends State<PropertyRegistrationPage> {
                           },
                         ),
                       ),
-
-                      // Botão de Remover (Estilo X)
                       Positioned(
                         top: 4,
                         right: 4,

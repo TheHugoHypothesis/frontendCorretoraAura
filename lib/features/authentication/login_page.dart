@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
-// ⚠️ Assumindo que este widget auxiliar está definido ou acessível.
 Widget _buildTextField({
   required TextEditingController controller,
   required String hintText,
@@ -17,16 +16,15 @@ Widget _buildTextField({
   required Color primaryColor,
   Widget? suffixIcon,
   bool obscureText = false,
-  TextInputType keyboardType =
-      TextInputType.text, // Adicionado para flexibilidade
-  List<TextInputFormatter>? inputFormatters, // Adicionado para flexibilidade
+  TextInputType keyboardType = TextInputType.text,
+  List<TextInputFormatter>? inputFormatters,
 }) {
   final isDark = theme.brightness == Brightness.dark;
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
       color: fieldColor,
-      borderRadius: BorderRadius.circular(14), // Bordas arredondadas
+      borderRadius: BorderRadius.circular(14),
       border: Border.all(
         color: theme.brightness == Brightness.dark
             ? Colors.white12
@@ -42,8 +40,8 @@ Widget _buildTextField({
           child: TextField(
             controller: controller,
             obscureText: obscureText,
-            keyboardType: keyboardType, // Usando o parâmetro
-            inputFormatters: inputFormatters, // Usando o parâmetro
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
             style: theme.textTheme.bodyLarge?.copyWith(color: primaryColor),
             decoration: InputDecoration(
               hintText: hintText,
@@ -75,29 +73,25 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   final AuthenticationRepository _authRepository = AuthenticationRepository();
-  bool _isLoading = false; // 👈 Estado de Carregamento
+  bool _isLoading = false;
 
   var cpfMaskFormatter = MaskTextInputFormatter(
-      mask: '###.###.###-##', // Máscara XXX.XXX.XXX-XX
+      mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
-  // Variável para controlar a visibilidade da senha
   bool _isPasswordVisible = false;
 
   void _handleLogin() async {
     if (_isLoading) return;
 
     final password = _passwordController.text;
-    final rawCpf = cpfMaskFormatter.getUnmaskedText();
+    final rawCpf = cpfMaskFormatter.getUnmaskedText().trim();
 
-    if (rawCpf.length != 11 || password.isEmpty) {
-      showCupertinoDialog(
-        context: context,
-        builder: (context) => const CupertinoAlertDialog(
-          title: Text("Dados Incompletos"),
-          content: Text("Por favor, verifique seu CPF e Senha."),
-        ),
+    if (rawCpf.isEmpty || rawCpf.length != 11 || password.isEmpty) {
+      _showAlert(
+        title: "Dados Incompletos",
+        message: "Por favor, verifique seu CPF e Senha.",
       );
       return;
     }
@@ -143,6 +137,22 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  void _showAlert({required String title, required String message}) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text("OK"),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleMissPassword() {
     Navigator.pushNamed(context, AppRoutes.forgotPassword);
   }
@@ -151,7 +161,6 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pushNamed(context, AppRoutes.signUp);
   }
 
-  // NOVO WIDGET: Botão de Cadastro Secundário
   Widget _buildSignUpButton(ThemeData theme, Color primaryColor) {
     return Center(
       child: CupertinoButton(
@@ -192,10 +201,8 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
-          // Column é o container principal para empilhar itens verticalmente
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. BOTÃO DE VOLTAR (Navigation Bar Simulada)
             Padding(
               padding: const EdgeInsets.only(left: 10.0, top: 10.0),
               child: CupertinoButton(
@@ -205,18 +212,14 @@ class _LoginPageState extends State<LoginPage> {
                 child: Icon(CupertinoIcons.back, color: primaryColor),
               ),
             ),
-
-            // 2. CONTEÚDO PRINCIPAL (Expanded para ocupar o espaço restante)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Espaçamento ajustado para não ficar muito grudado no topo
                     const SizedBox(height: 30),
 
-                    // Título "Apple Like"
                     Text(
                       "Aura\nImobiliária",
                       style: theme.textTheme.displayLarge?.copyWith(
@@ -238,17 +241,14 @@ class _LoginPageState extends State<LoginPage> {
 
                     // Campo de CPF
                     _buildTextField(
-                      controller: _cpfController, // Usando o controlador de CPF
-                      hintText: "CPF", // Alterado o hint
+                      controller: _cpfController,
+                      hintText: "CPF",
                       icon: CupertinoIcons.person_fill,
                       theme: theme,
                       fieldColor: fieldColor,
                       primaryColor: primaryColor,
-                      keyboardType: TextInputType
-                          .number, // Alterado para teclado numérico
-                      inputFormatters: [
-                        cpfMaskFormatter
-                      ], // Aplicando a máscara
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [cpfMaskFormatter],
                     ),
                     const SizedBox(height: 16),
 
@@ -293,7 +293,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
 
-                    const Spacer(), // Empurra o conteúdo para cima
+                    const Spacer(),
 
                     // Botão de Login (Principal)
                     SizedBox(
@@ -301,13 +301,11 @@ class _LoginPageState extends State<LoginPage> {
                       height: 56,
                       child: CupertinoButton(
                         color: primaryColor,
-                        onPressed: _isLoading
-                            ? null
-                            : _handleLogin, // Desabilita durante o loading
+                        onPressed: _isLoading ? null : _handleLogin,
                         borderRadius: BorderRadius.circular(14),
                         child: _isLoading
                             ? const CupertinoActivityIndicator(
-                                color: Colors.white) // Indicador
+                                color: Colors.white)
                             : Text(
                                 "Entrar",
                                 style: theme.textTheme.titleMedium?.copyWith(
@@ -317,7 +315,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                       ),
                     ),
-                    const SizedBox(height: 16), // Espaçamento entre botões
+                    const SizedBox(height: 16),
 
                     // Botão de Cadastro (Secundário, Estilo Texto)
                     _buildSignUpButton(theme, primaryColor),

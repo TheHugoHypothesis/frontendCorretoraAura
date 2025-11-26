@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-// Importa os arquivos separados
 import '../../data/services/geocoding_service.dart';
 import '../../data/models/selected_location_model.dart';
 
@@ -20,7 +19,6 @@ class MapLocationPicker extends StatefulWidget {
 }
 
 class _MapLocationPickerState extends State<MapLocationPicker> {
-  // 1. Instancia o serviço
   final GeocodingService _geocodingService = GeocodingService();
 
   late LatLng _currentLocation;
@@ -34,7 +32,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     _geocodeLocation(_currentLocation);
   }
 
-  // 2. A lógica da UI chama o serviço
   Future<void> _geocodeLocation(LatLng coordinates) async {
     setState(() {
       _isLoadingAddress = true;
@@ -42,7 +39,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     });
 
     try {
-      // Chama o serviço externo
       final place = await _geocodingService.geocodeWithNominatim(coordinates);
 
       if (place.road.isNotEmpty || place.city.isNotEmpty) {
@@ -75,14 +71,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     }
   }
 
-  // 3. A lógica de seleção também chama o serviço
   void _selectLocation() async {
     if (_isLoadingAddress) return;
 
     final place =
         await _geocodingService.geocodeWithNominatim(_currentLocation);
 
-    // Usa o Modelo de Dados 'SelectedLocation' para retornar
     SelectedLocation result = SelectedLocation(
       coordinates: _currentLocation,
       address: _currentAddress,
@@ -105,7 +99,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
     return Scaffold(
       appBar: AppBar(
-        // (Layout da AppBar mantido)
         backgroundColor: isDark ? Colors.black : Colors.white,
         elevation: 0,
         leading: CupertinoButton(
@@ -133,7 +126,6 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       ),
       body: Stack(
         children: [
-          // 1. Mapa Interativo (FlutterMap)
           FlutterMap(
             options: MapOptions(
               initialCenter: _currentLocation,
@@ -166,13 +158,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             ),
           ),
 
-          // 2. Painel Inferior de Endereço
           Positioned(
             bottom: 20,
             left: 20,
             right: 20,
             child: Container(
-              // (Layout do painel mantido)
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isDark

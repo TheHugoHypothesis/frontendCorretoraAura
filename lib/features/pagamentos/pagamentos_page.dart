@@ -10,7 +10,6 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 
-// Imports do Projeto
 import 'package:aura_frontend/core/repositorios/pagamentos_repository.dart';
 import 'package:aura_frontend/data/models/pagamento_model.dart';
 import 'package:aura_frontend/routes/app_routes.dart';
@@ -32,7 +31,7 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
   // Estado
   List<PagamentoModel> _pagamentos = [];
   bool _isLoading = false;
-  bool _hasSearched = false; // Para controlar a mensagem inicial
+  bool _hasSearched = false;
 
   // Controlador de Busca (Matrícula)
   final TextEditingController _matriculaSearchController =
@@ -50,12 +49,11 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
 
   // --- AÇÕES ---
 
-  // Busca pagamentos pelo imóvel (Rota: /pagamento/extrato-imovel)
+  // Busca pagamentos pelo imóvel
   Future<void> _searchPagamentos() async {
     final matricula = _matriculaSearchController.text.trim();
     if (matricula.isEmpty) return;
 
-    // Fecha o teclado
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
@@ -108,7 +106,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
       return;
     }
 
-    // 1. Feedback Visual (Loading)
     showCupertinoDialog(
       context: context,
       barrierDismissible: false,
@@ -121,7 +118,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
       final matricula = _matriculaSearchController.text;
       final dataEmissao = dateFormat.format(DateTime.now());
 
-      // Cálculos de Totais para o PDF
       double totalPago = 0;
       double totalPendente = 0;
       for (var p in _pagamentos) {
@@ -131,7 +127,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
           totalPendente += p.valor;
       }
 
-      // Dados da Tabela
       final tableData = _pagamentos
           .map((p) => [
                 dateFormat.format(p.dataVencimento),
@@ -143,17 +138,14 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
               ])
           .toList();
 
-      // Adiciona Cabeçalho da Tabela
       tableData.insert(
           0, ['Vencimento', 'Parc.', 'Tipo', 'Status', 'Forma', 'Valor']);
 
-      // 2. Construção do Documento
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(32),
           build: (pw.Context context) => [
-            // Cabeçalho AURA
             pw.Header(
               level: 0,
               child: pw.Row(
@@ -209,7 +201,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
 
             pw.SizedBox(height: 20),
 
-            // Tabela de Dados
             pw.Table.fromTextArray(
               headers: tableData[0],
               data: tableData.sublist(1),
@@ -244,7 +235,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
         ),
       );
 
-      // 3. Salvar e Abrir
       final dir = await getApplicationDocumentsDirectory();
       final fileName =
           "extrato_${matricula}_${DateTime.now().millisecondsSinceEpoch}.pdf";
@@ -252,12 +242,12 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
       await file.writeAsBytes(await pdf.save());
 
       if (mounted) {
-        Navigator.pop(context); // Fecha o loading
-        await OpenFilex.open(file.path); // Abre o PDF
+        Navigator.pop(context);
+        await OpenFilex.open(file.path);
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Fecha o loading
+        Navigator.pop(context);
         _showAlert("Erro no PDF", "Falha ao gerar arquivo: $e");
       }
     }
@@ -276,7 +266,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- HEADER (Estilo Consistente) ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
@@ -355,8 +344,7 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
                               controller: _matriculaSearchController,
                               style: theme.textTheme.bodyMedium
                                   ?.copyWith(color: primaryColor),
-                              keyboardType: TextInputType
-                                  .number, // Matrícula geralmente é número
+                              keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 hintText: "Buscar por Matrícula...",
                                 border: InputBorder.none,
@@ -370,7 +358,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Botão de Buscar
                   Container(
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white12 : Colors.grey.shade200,
@@ -388,7 +375,6 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
 
             const SizedBox(height: 10),
 
-            // --- LISTA DE RESULTADOS ---
             Expanded(
               child: _buildContentState(primaryColor, isDark),
             ),
@@ -452,9 +438,8 @@ class _PagamentosListPageState extends State<PagamentosListPage> {
     );
   }
 
-  // --- CARD DE PAGAMENTO (Apple Style) ---
+  // --- CARD DE PAGAMENTO ---
   Widget _buildPaymentCard(PagamentoModel p, Color primaryColor, bool isDark) {
-    // Definição de cores baseada no status
     Color statusColor;
     IconData statusIcon;
 

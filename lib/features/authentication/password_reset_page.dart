@@ -83,7 +83,6 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
   bool _isLoading = false;
 
   void _resetPassword() async {
-    // ⬅️ Tornar Assíncrono
     if (_isLoading) return;
 
     final newPassword = _newPasswordController.text;
@@ -199,7 +198,6 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
 
               const SizedBox(height: 40),
 
-              // 1. Campo Nova Senha
               _buildTextField(
                 controller: _newPasswordController,
                 hintText: "Nova Senha",
@@ -222,7 +220,6 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Campo Confirmar Senha
               _buildTextField(
                 controller: _confirmPasswordController,
                 hintText: "Confirme a Nova Senha",

@@ -17,7 +17,6 @@ class _FavoriteButtonState extends State<FavoriteButton>
   @override
   void initState() {
     super.initState();
-    // Configura a animação de pulso (rápida e suave)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -35,13 +34,10 @@ class _FavoriteButtonState extends State<FavoriteButton>
   }
 
   void _toggleFavorite() {
-    // 1. Inicia a animação de encolher
     _controller.forward().then((_) {
-      // 2. Troca o estado no meio da animação
       setState(() {
         _isFavorited = !_isFavorited;
       });
-      // 3. Volta ao tamanho original (efeito de bounce)
       _controller.reverse();
     });
   }
@@ -54,10 +50,8 @@ class _FavoriteButtonState extends State<FavoriteButton>
         margin: const EdgeInsets.all(8),
         width: 42,
         height: 42,
-        // O Fundo fica neutro (Branco levemente translúcido ou Sólido)
         decoration: BoxDecoration(
-          color:
-              Colors.white.withOpacity(0.9), // Leve transparência estilo Glass
+          color: Colors.white.withOpacity(0.9),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -70,11 +64,9 @@ class _FavoriteButtonState extends State<FavoriteButton>
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: Icon(
-            // Troca o ícone: Borda se false, Preenchido se true
             _isFavorited ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-            // Troca a cor: Vermelho Sistema se true, Preto se false
             color: _isFavorited ? CupertinoColors.systemRed : Colors.black,
-            size: 22, // Tamanho levemente maior para destaque
+            size: 22,
           ),
         ),
       ),

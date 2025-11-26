@@ -4,18 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ContractDetailsPage extends StatelessWidget {
-  final ContratoModel contrato; // modelo do contrato
+  final ContratoModel contrato;
 
   const ContractDetailsPage({super.key, required this.contrato});
-
-  void _navigateToPayments(BuildContext context) {
-    // Navigator.push(
-    //   context,
-    //   CupertinoPageRoute(
-    //     builder: (context) => PagamentoContent(contrato: contrato),
-    //   ),
-    // );
-  }
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -44,7 +35,6 @@ class ContractDetailsPage extends StatelessWidget {
       backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
-          // ==== APPBAR ====
           CupertinoSliverNavigationBar(
             largeTitle: Text(
               'Detalhes do Contrato',
@@ -61,8 +51,6 @@ class ContractDetailsPage extends StatelessWidget {
               ),
             ),
           ),
-
-          // ==== CONTEÚDO ====
           SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -70,7 +58,6 @@ class ContractDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Código e Status
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -107,8 +94,6 @@ class ContractDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Tipo e Valor
                   Text(
                     "Informações Gerais",
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -133,8 +118,6 @@ class ContractDetailsPage extends StatelessWidget {
                     icon: CupertinoIcons.money_dollar_circle_fill,
                   ),
                   const SizedBox(height: 30),
-
-                  // Participantes
                   Text(
                     "Partes Envolvidas",
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -156,7 +139,6 @@ class ContractDetailsPage extends StatelessWidget {
                     value: contrato.cpfCorretor.toString(),
                     icon: CupertinoIcons.person_2_square_stack,
                   ),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -192,7 +174,6 @@ class ContractDetailsPage extends StatelessWidget {
         children: [
           Icon(icon, color: primaryColor, size: 20),
           const SizedBox(width: 12),
-          // 🔹 Título com espaço flexível
           Expanded(
             child: Text(
               title,
@@ -203,7 +184,6 @@ class ContractDetailsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // 🔹 Valor com limite de tamanho
           Flexible(
             child: Text(
               value,

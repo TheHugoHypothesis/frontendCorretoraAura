@@ -3,7 +3,6 @@ import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-// Exemplo: você pode receber o corretor logado via parâmetro
 class SelecaoSubabaPage extends StatelessWidget {
   const SelecaoSubabaPage({super.key});
 

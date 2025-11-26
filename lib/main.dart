@@ -1,4 +1,3 @@
-import 'package:aura_frontend/data/models/corretor_model.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
 import 'package:aura_frontend/features/authentication/forgot_password_page.dart';
 import 'package:aura_frontend/features/authentication/onboarding_page.dart';

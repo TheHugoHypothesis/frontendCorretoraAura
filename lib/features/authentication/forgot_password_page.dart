@@ -3,7 +3,7 @@ import 'package:aura_frontend/features/authentication/otp_verification_page.dart
 import 'package:aura_frontend/routes/app_routes.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Para TextInputFormatter
+import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 Widget _buildTextField({
@@ -13,7 +13,6 @@ Widget _buildTextField({
   required ThemeData theme,
   required Color fieldColor,
   required Color primaryColor,
-  // ... (outros parâmetros necessários)
   List<TextInputFormatter>? inputFormatters,
   TextInputType keyboardType = TextInputType.text,
 }) {

@@ -8,8 +8,6 @@ import 'package:flutter/services.dart';
 
 import 'dart:ui';
 
-// Este é o widget auxiliar do seu login, ele deve ser incluído neste arquivo
-// ou importado se estiver em um arquivo separado para funcionar.
 Widget _buildTextField(
     {required TextEditingController controller,
     required String hintText,
@@ -60,7 +58,6 @@ Widget _buildTextField(
     ),
   );
 }
-// Fim do _buildTextField (Certifique-se que está disponível/importado)
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -91,30 +88,32 @@ class _SignUpPageState extends State<SignUpPage> {
   final AuthenticationRepository _authRepository = AuthenticationRepository();
   bool _isLoading = false;
 
-  // Formatador
   var phoneMaskFormatter = MaskTextInputFormatter(
-      mask: '(##) #####-####', // Máscara (XX) XXXXX-XXXX
+      mask: '(##) #####-####',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
   var cpfMaskFormatter = MaskTextInputFormatter(
-      mask: '###.###.###-##', // Máscara XXX.XXX.XXX-XX
+      mask: '###.###.###-##',
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy);
 
-  // Controles de Checkbox
+  var creciMaskFormatter = MaskTextInputFormatter(
+    mask: '######',
+    filter: {"#": RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
   bool _isProprietario = false;
   bool _isAdquirente = false;
   bool _isCorretor = true;
 
-  // Controle de visibilidade de senha
   bool _isPasswordVisible = false;
 
-  // Variável para armazenar a data de nascimento
   DateTime _dataNascimento = DateTime(2000, 1, 1);
 
   void _handleSignUp() async {
-    if (_isLoading) return; // Evita cliques múltiplos
+    if (_isLoading) return;
 
     if (!_isProprietario && !_isAdquirente && !_isCorretor) {
       showCupertinoDialog(
@@ -134,55 +133,35 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // 1. Coleta e Prepara os Dados
-    // Formatando a data para YYYY-MM-DD, conforme esperado pelo backend
     final String dataNascimentoFormatada =
         _dataNascimento.toIso8601String().split('T').first;
 
     final String telefonesLimpos = phoneMaskFormatter.getUnmaskedText();
 
     final userData = {
-      // CAMPOS PRINCIPAIS
       'cpf': cpfMaskFormatter.getUnmaskedText(),
       'prenome': _nomeController.text.trim(),
       'sobrenome': _sobrenomeController.text.trim(),
       'email': _emailController.text.trim(),
-      'senha': _passwordController.text.trim(), // Python espera 'senha'
-
-      // CORREÇÃO DE NOMES
-      'data_nasc': _dataNascimento
-          .toIso8601String()
-          .split('T')
-          .first, // Python espera 'data_nasc'
-      'telefones':
-          telefonesLimpos, // Python espera 'telefones' (lista separada por vírgula)
-
-      // FLAGS DE TIPO (Python espera 'proprietario', 'adquirente', 'corretor')
-      'proprietario': false, // Boolean True/False
-      'adquirente': false, // Boolean True/False
-      'corretor': _isCorretor, // Boolean True/False
-
-      // CAMPOS CONDICIONAIS (Se a flag for True)
+      'senha': _passwordController.text.trim(),
+      'data_nasc': _dataNascimento.toIso8601String().split('T').first,
+      'telefones': telefonesLimpos,
+      'proprietario': false,
+      'adquirente': false,
+      'corretor': _isCorretor,
       if (_isAdquirente)
-        'pontuacao_credito': int.tryParse(_pontuacaoCreditoController.text) ??
-            0, // Python espera 'pontuacao_credito'
-
+        'pontuacao_credito':
+            int.tryParse(_pontuacaoCreditoController.text) ?? 0,
       if (_isCorretor) 'creci': _creciController.text.trim(),
-
       if (_isCorretor) 'especialidade': _especialidadeController.text.trim(),
-
-      if (_isCorretor)
-        'regiao_atuação': _regiaoAtuacaoController.text
-            .trim(), // Python espera 'regiao_atuação' (com ç)
+      if (_isCorretor) 'regiao_atuação': _regiaoAtuacaoController.text.trim(),
     };
 
     setState(() => _isLoading = true);
 
-    // 2. Tenta registrar no backend
     try {
       await _authRepository.registerUser(userData);
 
-      // 3. Se o registro for bem-sucedido, prossegue para a Política
       final accepted =
           await Navigator.pushNamed(context, AppRoutes.privacyPolicy);
 
@@ -208,7 +187,7 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
           );
         } else {
-          // Recusa de Termos (O usuário existe no banco, mas não aceitou os termos)
+          // Recusa de Termos
           showCupertinoDialog(
             context: context,
             builder: (context) => CupertinoAlertDialog(
@@ -226,9 +205,7 @@ class _SignUpPageState extends State<SignUpPage> {
         }
       }
     } catch (e) {
-      // 4. Trata erro do Backend/Rede
       if (mounted) {
-        // Tenta extrair a mensagem de erro da Exceção
         String errorMessage = e.toString().contains("Exception:")
             ? e.toString().split("Exception:")[1].trim()
             : "Ocorreu um erro desconhecido.";
@@ -253,7 +230,6 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // Seletor de Data para o estilo Apple/Cupertino
   void _showDatePicker() {
     showModalBottomSheet(
       context: context,
@@ -286,7 +262,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      // Usamos um CustomScrollView para um cabeçalho fixo com scroll suave do conteúdo
       body: CustomScrollView(
         slivers: [
           CupertinoSliverNavigationBar(
@@ -301,7 +276,7 @@ class _SignUpPageState extends State<SignUpPage> {
             border: Border(
               bottom: BorderSide(
                 color: isDark ? Colors.white12 : Colors.grey.shade300,
-                width: 0.0, // Fino, estilo Cupertino
+                width: 0.0,
               ),
             ),
             leading: CupertinoButton(
@@ -317,7 +292,6 @@ class _SignUpPageState extends State<SignUpPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Seção de Atributos Comuns (USUÁRIO) ---
                   Text(
                     "Informações Pessoais",
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -347,29 +321,26 @@ class _SignUpPageState extends State<SignUpPage> {
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _cpfController,
-                    hintText: "CPF", // NOVO HINT
+                    hintText: "CPF",
                     icon: CupertinoIcons.number_circle_fill,
                     keyboardType: TextInputType.number,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
-                    // APLICANDO O FORMATTER DE CPF
                     inputFormatters: [cpfMaskFormatter],
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _telefoneController,
-                    hintText: "Telefone de Contato", // NOVO HINT
+                    hintText: "Telefone de Contato",
                     icon: CupertinoIcons.phone_fill,
                     keyboardType: TextInputType.phone,
                     theme: theme,
                     fieldColor: fieldColor,
                     primaryColor: primaryColor,
-                    // ADICIONANDO O FORMATTER
                     inputFormatters: [phoneMaskFormatter],
                   ),
                   const SizedBox(height: 12),
-                  // Campo de Data de Nascimento (Botão)
                   GestureDetector(
                     onTap: _showDatePicker,
                     child: Container(
@@ -401,7 +372,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- Seção de Acesso e Segurança ---
                   Text(
                     "Acesso e Segurança",
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -447,7 +417,6 @@ class _SignUpPageState extends State<SignUpPage> {
 
                   const SizedBox(height: 30),
 
-                  // --- Seção de Tipos de Usuário (Checkboxes e Campos Dinâmicos) ---
                   Text(
                     "Como você irá atuar?",
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -463,7 +432,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     title: "Corretor",
                     subtitle: "Profissional que gerencia contratos.",
                     value: _isCorretor,
-                    onChanged: (val) => setState(() => _isCorretor = val),
+                    onChanged: (val) {},
                   ),
 
                   // Campos Dinâmicos do Corretor
@@ -473,10 +442,11 @@ class _SignUpPageState extends State<SignUpPage> {
                       controller: _creciController,
                       hintText: "Número CRECI (SP)",
                       icon: CupertinoIcons.square_stack_3d_up_fill,
-                      keyboardType: TextInputType.text,
+                      keyboardType: TextInputType.number,
                       theme: theme,
                       fieldColor: fieldColor,
                       primaryColor: primaryColor,
+                      inputFormatters: [creciMaskFormatter],
                     ),
                     const SizedBox(height: 12),
                     _buildTextField(
@@ -508,12 +478,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     height: 56,
                     child: CupertinoButton(
                       color: primaryColor,
-                      // Se estiver carregando, onPressed é null (desabilitado)
                       onPressed: _isLoading ? null : _handleSignUp,
                       borderRadius: BorderRadius.circular(14),
                       child: _isLoading
                           ? const CupertinoActivityIndicator(
-                              color: Colors.white) // Indicador de carregamento
+                              color: Colors.white)
                           : Text(
                               "Criar Conta Aura",
                               style: theme.textTheme.titleMedium?.copyWith(
@@ -533,7 +502,6 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  // Widget para criar os Checkboxes no estilo iOS
   Widget _buildCheckboxTile({
     required ThemeData theme,
     required String title,
@@ -580,7 +548,7 @@ class _SignUpPageState extends State<SignUpPage> {
           CupertinoSwitch(
             value: value,
             onChanged: onChanged,
-            activeColor: primaryColor, // Preto ou Branco para o estilo B&W
+            activeColor: primaryColor,
             trackColor: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
           ),
         ],

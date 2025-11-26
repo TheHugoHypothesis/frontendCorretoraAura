@@ -24,7 +24,7 @@ class AuthenticationRepository {
       responseData['access_token'],
       responseData['refresh_token'],
     );
-    // Mapeia o usuário retornado
+
     try {
       final user = responseData['user'];
 
@@ -50,7 +50,7 @@ class AuthenticationRepository {
   }
 
   Future<CorretorModel?> loadProfile() async {
-    final prefs = await SharedPreferences.getInstance(); // API Legada
+    final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_userProfileKey);
 
     if (userJson == null) {

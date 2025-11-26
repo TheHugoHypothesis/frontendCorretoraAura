@@ -4,13 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
-// Importe seus modelos e repositórios
 import 'package:aura_frontend/core/repositorios/imovel_repository.dart';
 import 'package:aura_frontend/data/models/imovel_model.dart';
-
-// ====================================================================
-// WIDGETS AUXILIARES (Copiados da RegistrationPage para consistência)
-// ====================================================================
 
 Widget _buildSectionHeader(ThemeData theme, String title) {
   return Padding(
@@ -285,7 +280,6 @@ class _ImovelEditPageState extends State<ImovelEditPage> {
     _cepController = TextEditingController(text: _cepFormatter.maskText(i.cep));
     _descricaoController = TextEditingController(text: i.descricao);
 
-    // Trata formatação da metragem (double -> string)
     _metragemController =
         TextEditingController(text: i.metragem.toString().replaceAll('.', ','));
 
@@ -354,7 +348,7 @@ class _ImovelEditPageState extends State<ImovelEditPage> {
       await _repository.updateImovel(updatedImovel);
 
       if (mounted) {
-        Navigator.pop(context, true); // Retorna true para indicar sucesso
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text("Imóvel atualizado com sucesso!"),

@@ -24,7 +24,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
   bool _isLoading = true;
   int _currentLimit = 10;
 
-  // Estatísticas
   int _ativos = 0;
   int _vencendo = 0;
   int _atrasados = 0;
@@ -102,7 +101,7 @@ class _ContratoListPageState extends State<ContratoListPage> {
           _buildLimitAction(10),
           _buildLimitAction(30),
           _buildLimitAction(50),
-          _buildLimitAction(100), // "Todos" ou um número alto
+          _buildLimitAction(100),
         ],
         cancelButton: CupertinoActionSheetAction(
           child: const Text('Cancelar'),
@@ -122,7 +121,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
       onPressed: () {
         Navigator.pop(context);
         if (_currentLimit != value) {
-          // Atualiza o limite e recarrega os dados
           setState(() => _currentLimit = value);
           _fetchData();
         }
@@ -140,19 +138,15 @@ class _ContratoListPageState extends State<ContratoListPage> {
     _fetchData();
   }
 
-  // --- LÓGICA DO GRÁFICO ---
   List<FlSpot> _getChartSpots() {
     if (_contratosList.isEmpty) return [const FlSpot(0, 0), const FlSpot(5, 0)];
 
     final now = DateTime.now();
     final List<FlSpot> spots = [];
 
-    // Itera pelos últimos 6 meses (0 a 5)
     for (int i = 0; i < 6; i++) {
-      // Começa do mês mais antigo (5 meses atrás) até o atual
       final targetDate = DateTime(now.year, now.month - (5 - i));
 
-      // Soma valores dos contratos criados neste mês/ano
       double monthlyTotal = 0;
       for (var contrato in _contratosList) {
         if (contrato.dataInicio.month == targetDate.month &&
@@ -165,10 +159,8 @@ class _ContratoListPageState extends State<ContratoListPage> {
     return spots;
   }
 
-  // Gera os títulos dos meses para o Eixo X
   Widget _bottomTitleWidgets(double value, TitleMeta meta, bool isDark) {
     final now = DateTime.now();
-    // Calcula o mês correspondente ao índice do gráfico
     final date = DateTime(now.year, now.month - (5 - value.toInt()));
     final String monthName =
         DateFormat('MMM', 'pt_BR').format(date).toUpperCase();
@@ -276,7 +268,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 10),
                       children: [
-                        // --- GRÁFICO FINANCEIRO ---
                         Text(
                           "Novos Contratos (6 Meses)",
                           style: theme.textTheme.titleMedium?.copyWith(
@@ -306,11 +297,9 @@ class _ContratoListPageState extends State<ContratoListPage> {
                                     sideTitles: SideTitles(showTitles: false)),
                                 topTitles: const AxisTitles(
                                     sideTitles: SideTitles(showTitles: false)),
-                                // Eixo Y (Valores) - Simplificado
                                 leftTitles: const AxisTitles(
                                   sideTitles: SideTitles(showTitles: false),
                                 ),
-                                // Eixo X (Meses)
                                 bottomTitles: AxisTitles(
                                   sideTitles: SideTitles(
                                     showTitles: true,
@@ -333,7 +322,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
                                   dotData: const FlDotData(show: false),
                                   belowBarData: BarAreaData(
                                     show: true,
-                                    // Gradiente suave
                                     gradient: LinearGradient(
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
@@ -345,7 +333,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
                                   ),
                                 ),
                               ],
-                              // Tooltip ao tocar no gráfico
                               lineTouchData: LineTouchData(
                                 touchTooltipData: LineTouchTooltipData(
                                   getTooltipColor: (touchedSpot) => isDark
@@ -401,11 +388,9 @@ class _ContratoListPageState extends State<ContratoListPage> {
                             Text("Recentes",
                                 style: theme.textTheme.titleMedium
                                     ?.copyWith(fontWeight: FontWeight.bold)),
-
-                            // BOTÃO PARA MUDAR O LIMITE
                             CupertinoButton(
                               padding: EdgeInsets.zero,
-                              onPressed: _showLimitPicker, // Abre o seletor
+                              onPressed: _showLimitPicker,
                               child: Row(
                                 children: [
                                   Text("Ver $_currentLimit",
@@ -421,7 +406,6 @@ class _ContratoListPageState extends State<ContratoListPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // --- LISTA DE CONTRATOS ---
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [

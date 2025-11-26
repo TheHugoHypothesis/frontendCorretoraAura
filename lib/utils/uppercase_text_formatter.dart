@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-// UpperCaseTextFormatter (Definido uma vez no seu projeto)
+// UpperCaseTextFormatter
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

@@ -33,7 +33,7 @@ class _PagamentoDetailsPageState extends State<PagamentoDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.pagamento.status; // Inicia com o valor atual
+    _currentStatus = widget.pagamento.status;
   }
 
   // --- AÇÃO DE SALVAR ---
@@ -50,7 +50,6 @@ class _PagamentoDetailsPageState extends State<PagamentoDetailsPage> {
       if (mounted) {
         setState(() => _isLoading = false);
 
-        // Mostra sucesso e volta para a lista retornando 'true' para recarregar
         showCupertinoDialog(
           context: context,
           builder: (ctx) => CupertinoAlertDialog(
@@ -60,8 +59,8 @@ class _PagamentoDetailsPageState extends State<PagamentoDetailsPage> {
               CupertinoDialogAction(
                 child: const Text("OK"),
                 onPressed: () {
-                  Navigator.pop(ctx); // Fecha Dialog
-                  Navigator.pop(context, true); // Fecha Página e avisa reload
+                  Navigator.pop(ctx);
+                  Navigator.pop(context, true);
                 },
               )
             ],
@@ -278,7 +277,7 @@ class _PagamentoDetailsPageState extends State<PagamentoDetailsPage> {
                       onPressed: _isLoading ? null : _updateStatus,
                       child: _isLoading
                           ? const CupertinoActivityIndicator(
-                              color: Colors.white) // Inverte cor para contraste
+                              color: Colors.white)
                           : Text(
                               "Atualizar Status",
                               style: TextStyle(

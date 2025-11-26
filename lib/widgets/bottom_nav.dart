@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-// Modificado para StatelessWidget e para receber o estado e o callback do pai
 class HomeBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final void Function(int) onItemTapped;
@@ -57,11 +56,9 @@ class HomeBottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(_icons.length, (index) {
-              // Usa o selectedIndex que veio do widget pai
               final isActive = selectedIndex == index;
               return Expanded(
                 child: GestureDetector(
-                  // 🚨 CHAMA O CALLBACK PARA MUDAR O ESTADO NO PAI 🚨
                   onTap: () => onItemTapped(index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),

@@ -1,10 +1,10 @@
 import 'dart:io';
 
 class ContratoModel {
-  final int codigo; // Mantido como int conforme seu DB (SERIAL)
+  final int codigo;
   final double valor;
   final String status;
-  final String tipo; // "Venda" ou "Aluguel"
+  final String tipo;
   final DateTime dataInicio;
   final DateTime dataFim;
   final String matriculaImovel;

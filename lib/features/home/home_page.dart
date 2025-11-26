@@ -17,12 +17,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  // 1. O IndexedStack aponta para as classes isoladas
   final List<Widget> _screens = [
     const DiscoverPage(),
-    const ContratoListPage(), // Usando o nome de classe limpo
-    const PagamentosListPage(), // Usando o nome de classe limpo
-    const SelecaoSubabaPage(), // Perfil (Exemplo de dado dinâmico)
+    const ContratoListPage(),
+    const PagamentosListPage(),
+    const SelecaoSubabaPage(),
   ];
 
   void _onItemTapped(int index) {

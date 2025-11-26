@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class OtpVerificationPage extends StatefulWidget {
-  final String cpf; // Recebe o CPF para exibir/referência
+  final String cpf;
 
   const OtpVerificationPage({super.key, required this.cpf});
 
@@ -16,12 +16,9 @@ class OtpVerificationPage extends StatefulWidget {
 
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
   final int _otpLength = 6;
-  // Controladores para cada dígito
   late List<TextEditingController> _otpControllers;
-  // Foco para gerenciar a mudança entre campos
   late List<FocusNode> _focusNodes;
 
-  // Estado para armazenar o código completo
   String _enteredOtp = '';
 
   final AuthenticationRepository _authRepository = AuthenticationRepository();
@@ -33,14 +30,13 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     _otpControllers = List.generate(_otpLength, (_) => TextEditingController());
     _focusNodes = List.generate(_otpLength, (_) => FocusNode());
 
-    // Adiciona listener para avançar o foco automaticamente
     for (int i = 0; i < _otpLength; i++) {
       _otpControllers[i].addListener(() {
         if (_otpControllers[i].text.length == 1) {
           if (i < _otpLength - 1) {
             _focusNodes[i + 1].requestFocus();
           } else {
-            _focusNodes[i].unfocus(); // Remove o foco do último campo
+            _focusNodes[i].unfocus();
           }
         }
         _updateOtp();
@@ -61,31 +57,24 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
   void _updateOtp() {
     _enteredOtp = _otpControllers.map((c) => c.text).join();
-    setState(() {}); // Atualiza o botão para verificar se o OTP está completo
+    setState(() {});
   }
 
   void _verifyOtp() async {
     if (_enteredOtp.length != _otpLength || _isLoading) return;
 
-    // Remove o foco para garantir que o teclado desapareça
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
     try {
-      // 1. Chama o Repositório para verificar o OTP no backend
-      await _authRepository.verifyOtp(
-          widget.cpf, // CPF que veio da rota anterior
-          _enteredOtp // Código OTP digitado
-          );
+      await _authRepository.verifyOtp(widget.cpf, _enteredOtp);
 
-      // 2. Se a chamada for bem-sucedida (status 200), navega para a redefinição de senha
       if (mounted) {
         final arguments = {
           'cpf': widget.cpf,
-          'otpCode': _enteredOtp, // Passa o OTP validado para a próxima etapa
+          'otpCode': _enteredOtp,
         };
 
-        // Sucesso: Navega para a PasswordResetPage
         Navigator.pushNamed(
           context,
           AppRoutes.resetPassword,
@@ -93,7 +82,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
         );
       }
     } catch (e) {
-      // 3. Trata Erro (Ex: Código inválido ou expirado - 401/400)
       if (mounted) {
         String errorMessage = e.toString().contains("Exception:")
             ? e.toString().split("Exception:")[1].trim()
@@ -149,7 +137,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-
               Text(
                 "Confirme o Código",
                 style: theme.textTheme.displaySmall?.copyWith(
@@ -164,20 +151,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   color: accentColor,
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // CAMPO DE ENTRADA OTP CENTRALIZADO
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(_otpLength, (index) {
                   return _buildOtpField(theme, index);
                 }),
               ),
-
               const SizedBox(height: 30),
-
-              // Botão Reenviar (Estilo Texto)
               Center(
                 child: CupertinoButton(
                   onPressed: () {
@@ -190,16 +171,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       style: TextStyle(color: primaryColor)),
                 ),
               ),
-
               const Spacer(),
-
-              // Botão Verificar
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: CupertinoButton(
                   color: primaryColor,
-                  // Desabilita se o código não estiver completo OU estiver carregando
                   onPressed: (_enteredOtp.length == _otpLength && !_isLoading)
                       ? _verifyOtp
                       : null,
@@ -251,12 +228,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
           style: theme.textTheme.headlineSmall
               ?.copyWith(color: primaryColor, fontWeight: FontWeight.bold),
           cursorColor: primaryColor,
-          decoration:
-              const BoxDecoration(border: null), // Remove a borda padrão
+          decoration: const BoxDecoration(border: null),
           padding: EdgeInsets.zero,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (value) {
-            // Lógica para retroceder o foco automaticamente
             if (value.isEmpty && index > 0) {
               _focusNodes[index - 1].requestFocus();
             }

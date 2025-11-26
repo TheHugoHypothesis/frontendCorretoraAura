@@ -1,8 +1,7 @@
 class AppRoutes {
-  static const String initial = '/'; // Geralmente a HomePage ou Login
+  static const String initial = '/';
   static const String onboarding = '/onboarding';
 
-  // Rotas da Home/Navegação
   static const String home = '/home';
   static const String contracts = '/contracts';
   static const String payments = '/payments';
@@ -17,7 +16,6 @@ class AppRoutes {
   static const String otpVerification = '/otp-verification';
   static const String privacyPolicy = '/policy';
 
-  // Rotas de Fluxo (Push)
   static const String propertyRegistration = '/imovel/cadastro';
   static const String propertyDetails = '/imovel/detalhes';
   static const String propertyPerformance = '/imovel/performance';

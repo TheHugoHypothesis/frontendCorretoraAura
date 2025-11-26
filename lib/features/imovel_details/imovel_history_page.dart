@@ -126,7 +126,7 @@ class _ImovelHistoryPageState extends State<ImovelHistoryPage> {
     );
   }
 
-  // --- WIDGET DO CARD DE HISTÓRICO (Timeline Style) ---
+  // --- WIDGET DO CARD DE HISTÓRICO ---
   Widget _buildHistoryCard(
     HistoricoPessoasModel item,
     Color primaryColor,
@@ -134,7 +134,6 @@ class _ImovelHistoryPageState extends State<ImovelHistoryPage> {
     Color cardColor,
     Color borderColor,
   ) {
-    // Define ícone baseado no tipo
     final bool isVenda = item.tipo.toLowerCase() == 'venda';
     final IconData typeIcon =
         isVenda ? CupertinoIcons.money_dollar_circle : CupertinoIcons.doc_text;

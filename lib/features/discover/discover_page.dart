@@ -17,12 +17,9 @@ class DiscoverPage extends StatefulWidget {
 class _DiscoverPageState extends State<DiscoverPage> {
   final ImovelRepository _imovelRepository = ImovelRepository();
 
-  // Controlador para a barra de busca local
   final TextEditingController _searchController = TextEditingController();
 
-  // Lista 1: Dados originais vindos da API
   List<ImovelModel> _imoveisList = [];
-  // Lista 2: Dados filtrados localmente (exibidos na tela)
   List<ImovelModel> _filteredImoveisList = [];
 
   bool _isLoading = false;
@@ -34,7 +31,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   void initState() {
     super.initState();
 
-    // Adiciona o ouvinte para filtrar enquanto digita
     _searchController.addListener(_onSearchChanged);
 
     final Map<String, dynamic> defaultFilters = {
@@ -118,12 +114,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   void _navigateToMap(BuildContext context) {
-    // Passa a lista atual de imóveis (filtrados ou todos)
     Navigator.push(
       context,
       CupertinoPageRoute(
-        builder: (context) => ImoveisMapPage(
-            imoveis: _filteredImoveisList), // Usa a lista filtrada
+        builder: (context) => ImoveisMapPage(imoveis: _filteredImoveisList),
       ),
     );
   }
@@ -138,7 +132,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
       AppRoutes.filters,
     );
 
-    // Se retornou filtros (usuário clicou em Aplicar), faz a busca
     if (selectedFilters != null && selectedFilters is Map<String, dynamic>) {
       print("Filtros Recebidos: $selectedFilters");
       lastFilter = selectedFilters;
@@ -151,7 +144,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // primaryColor é usado para a cor do botão 'Adicionar Imóvel'
     final primaryColor = theme.primaryColor;
 
     return SafeArea(
@@ -163,7 +155,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               children: [
-                // Ícone Esquerda (House)
                 Expanded(
                   flex: 1,
                   child: Align(
@@ -202,7 +193,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   ),
                 ),
 
-                // Ícone Direita (Notificações)
+                // Ícone Direita (Mapa)
                 Expanded(
                   flex: 1,
                   child: Align(
@@ -244,8 +235,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
-                            controller:
-                                _searchController, // ✅ Controlador Conectado
+                            controller: _searchController,
                             style: theme.textTheme.bodyMedium,
                             decoration: const InputDecoration(
                               hintText: "Busca logradouro...",
@@ -261,7 +251,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
                 const SizedBox(width: 12),
 
-                // Botão de Filtro (API)
+                // Botão de Filtro
                 Container(
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white10 : Colors.grey.shade100,

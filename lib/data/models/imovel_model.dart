@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class ImovelModel {
-  // 1. Identificadores e Descrição
   final String matricula;
   final String descricao;
-  final String cpfProprietario; // cpf_prop
+  final String cpfProprietario;
 
-  // 2. Endereço (Campos Brutos)
   final String logradouro;
   final String numero;
   final String complemento;
@@ -16,7 +14,6 @@ class ImovelModel {
   final String cidade;
   final String cep;
 
-  // 3. Características Físicas
   final double metragem;
   final int numQuartos; // n_quartos
   final int numReformas; // n_reformas
@@ -25,13 +22,10 @@ class ImovelModel {
   final bool possuiGaragem;
   final bool eMobiliado; // mobiliado
 
-  // 4. Valores e Status
-  final double valorVenalRaw; // Valor numérico puro (380000.0)
-  final String
-      statusOcupacao; // Backend não mandou no JSON de exemplo, usaremos default
+  final double valorVenalRaw;
+  final String statusOcupacao;
 
-  // 5. Listas e Mídia
-  final List<String> imagens; // Lista de URLs
+  final List<String> imagens;
   final List<String> comodidades;
   final List<ContratoModel> contratos;
 
@@ -53,13 +47,11 @@ class ImovelModel {
     required this.possuiGaragem,
     required this.eMobiliado,
     required this.valorVenalRaw,
-    this.statusOcupacao = 'Disponível', // Default
+    this.statusOcupacao = 'Disponível',
     this.imagens = const [],
     this.comodidades = const [],
     this.contratos = const [],
   });
-
-  // --- GETTERS INTELIGENTES (Para a UI) ---
 
   // Retorna o endereço completo formatado para o Card
   String get enderecoCompleto =>
@@ -68,16 +60,13 @@ class ImovelModel {
   // Retorna a primeira imagem ou null (para o PropertyCard)
   String? get profileImageUrl => imagens.isNotEmpty ? imagens.first : null;
 
-  // Retorna o valor formatado em R$ (para a UI)
+  // Retorna o valor formatado em R$
   String get valorVenalFormatado {
     final format = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     return format.format(valorVenalRaw);
   }
 
-  // --- FACTORY (Mapeamento do Backend) ---
-
   factory ImovelModel.fromJson(Map<String, dynamic> json) {
-    // Tratamento da lista de imagens (que pode vir com null dentro: [null])
     List<String> listaImagens = [];
     if (json['imagens'] != null && json['imagens'] is List) {
       listaImagens = (json['imagens'] as List)
@@ -95,7 +84,6 @@ class ImovelModel {
     }
 
     // Tratamento de Comodidades (se vierem)
-    // Nota: O JSON de exemplo não mostrou 'comodidades', mas se vier:
     List<String> listaComodidades = [];
     if (json['comodidades'] != null) {
       if (json['comodidades'] is List) {
@@ -111,36 +99,28 @@ class ImovelModel {
       matricula: json['matricula']?.toString() ?? '',
       descricao: json['descricao'] ?? '',
       cpfProprietario: json['cpf_prop'] ?? '',
-
       logradouro: json['logradouro'] ?? '',
       numero: json['numero'] ?? '',
       complemento: json['complemento'] ?? '',
       bairro: json['bairro'] ?? '',
       cidade: json['cidade'] ?? '',
       cep: json['cep'] ?? '',
-
       metragem: (json['metragem'] as num?)?.toDouble() ?? 0.0,
       numQuartos: json['n_quartos'] as int? ?? 0,
       numReformas: json['n_reformas'] as int? ?? 0,
-
       tipo: json['tipo'] ?? '',
       finalidade: json['finalidade'] ?? '',
-
       possuiGaragem: json['possui_garagem'] ?? false,
-      eMobiliado: json['mobiliado'] ?? false, // Backend usa 'mobiliado'
-
+      eMobiliado: json['mobiliado'] ?? false,
       valorVenalRaw: (json['valor_venal'] as num?)?.toDouble() ?? 0.0,
-
-      // O Backend não mandou status no JSON de exemplo, mantemos o default ou tentamos ler
       statusOcupacao: json['status'] ?? 'Disponível',
-
       imagens: listaImagens,
       contratos: listaContratos,
       comodidades: listaComodidades,
     );
   }
 
-  // Para envio (se necessário)
+  // Para envio
   Map<String, dynamic> toJson() {
     return {
       'matricula': matricula,

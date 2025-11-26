@@ -76,7 +76,6 @@ class ContratosRepository {
       Endpoints.contratosDashboard,
       requireAuth: true,
     );
-    // Espera: { "ativos": 10, "vencendo": 2, "atrasados": 1 }
     return response is Map<String, dynamic> ? response : {};
   }
 

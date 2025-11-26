@@ -290,7 +290,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     }
   }
 
-// ⚠️ Este é um método auxiliar que você deve garantir que exista na classe.
   void _showAlert(String title, String content) {
     showCupertinoDialog(
       context: context,
@@ -350,7 +349,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
     final accentColor = CupertinoColors.systemGrey;
 
     return GestureDetector(
-      onTap: onTap, // ⬅️ Ação que chama _showPicker
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -388,14 +387,11 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // ⚠️ Assumindo que você importou 'extended_image/extended_image.dart' se quiser usar o ExtendedImage
-
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = isDark ? Colors.white : Colors.black;
     final fieldColor = isDark ? Colors.white10 : Colors.grey.shade100;
 
-    // 1. Estados de Carregamento e Perfil
     if (_isLoading) {
       return const Center(child: CupertinoActivityIndicator());
     }
@@ -409,7 +405,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
 
     final CorretorModel profile = _corretorProfile!;
 
-    // 2. Variáveis de Exibição
     final String cpfDisplay = profile.cpf;
     final String creciDisplay = profile.creci;
     final String dataNascimentoDisplay = profile.dataNascimento;
@@ -420,7 +415,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
       backgroundColor: isDark ? Colors.black : Colors.white,
       body: CustomScrollView(
         slivers: [
-          // HEADER (Sliver Navigation Bar)
+          // HEADER
           CupertinoSliverNavigationBar(
             largeTitle: Text("Meu Perfil",
                 style: theme.textTheme.headlineMedium?.copyWith(
@@ -441,7 +436,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
             ),
           ),
 
-          // 3. CORPO PRINCIPAL COM CONTEÚDO
           SliverToBoxAdapter(
             child: Padding(
               padding:
@@ -465,40 +459,33 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                                   : Colors.grey.shade200,
                             ),
                             child: ClipOval(
-                              child:
-                                  // 1. Pré-visualização local APÓS seleção
-                                  _profileImage != null
-                                      ? Image.file(_profileImage!,
-                                          fit: BoxFit.cover)
-
-                                      // 2. Imagem de Rede (URL salva no BD)
-                                      : hasRemoteImage
-                                          ? Image.network(
-                                              profile.profileImageUrl!,
-                                              fit: BoxFit.cover,
-                                              loadingBuilder: (context, child,
-                                                  loadingProgress) {
-                                                if (loadingProgress == null)
-                                                  return child;
-                                                return const Center(
-                                                    child:
-                                                        CupertinoActivityIndicator());
-                                              },
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Icon(
-                                                      CupertinoIcons
-                                                          .person_alt_circle_fill,
-                                                      size: 100,
-                                                      color: Colors.red),
-                                            )
-
-                                          // 3. Fallback (Ícone Padrão)
-                                          : Icon(
-                                              CupertinoIcons
-                                                  .person_alt_circle_fill,
-                                              size: 100,
-                                              color: Colors.grey.shade500),
+                              child: _profileImage != null
+                                  ? Image.file(_profileImage!,
+                                      fit: BoxFit.cover)
+                                  : hasRemoteImage
+                                      ? Image.network(
+                                          profile.profileImageUrl!,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (context, child,
+                                              loadingProgress) {
+                                            if (loadingProgress == null)
+                                              return child;
+                                            return const Center(
+                                                child:
+                                                    CupertinoActivityIndicator());
+                                          },
+                                          errorBuilder: (context, error,
+                                                  stackTrace) =>
+                                              Icon(
+                                                  CupertinoIcons
+                                                      .person_alt_circle_fill,
+                                                  size: 100,
+                                                  color: Colors.red),
+                                        )
+                                      : Icon(
+                                          CupertinoIcons.person_alt_circle_fill,
+                                          size: 100,
+                                          color: Colors.grey.shade500),
                             ),
                           ),
                           // Botão Câmera/Editar
@@ -611,7 +598,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   _buildSectionHeader(theme, "Atuação Profissional"),
                   const SizedBox(height: 16),
 
-                  // 1. Especialidade
                   _buildSelectorTile(
                     theme: theme,
                     title: "Especialidade",
@@ -625,7 +611,6 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // 2. Região de Atuação
                   _buildSelectorTile(
                     theme: theme,
                     title: "Região de Atuação",
@@ -640,7 +625,7 @@ class _CorretorProfilePageState extends State<CorretorProfilePage> {
 
                   const SizedBox(height: 30),
 
-                  // DADOS CRÍTICOS (Apenas Leitura)
+                  // DADOS CRÍTICOS
                   _buildSectionHeader(theme, "Dados Críticos"),
                   const SizedBox(height: 16),
                   _buildProfileInfoTile(

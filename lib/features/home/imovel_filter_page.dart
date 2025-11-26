@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart'; // Para CEP e CPF
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter/services.dart';
 
 class FilterImovelPage extends StatefulWidget {
@@ -22,23 +22,19 @@ class UpperCaseTextFormatter extends TextInputFormatter {
 }
 
 class _FilterImovelPageState extends State<FilterImovelPage> {
-// --- CONTROLLERS DE ENDEREÇO E FILTROS ---
-  final TextEditingController _cepController =
-      TextEditingController(); // NOVO: CEP
+  final TextEditingController _cepController = TextEditingController();
   final TextEditingController _cidadeController = TextEditingController();
   final TextEditingController _bairroController = TextEditingController();
-  final TextEditingController _logradouroController =
-      TextEditingController(); // RENOMEADO: Logradouro
+  final TextEditingController _logradouroController = TextEditingController();
   final TextEditingController _proprietarioCpfController =
-      TextEditingController(); // NOVO: CPF Proprietário
-  final TextEditingController _matriculaController =
-      TextEditingController(); // NOVO: Matrícula
+      TextEditingController();
+  final TextEditingController _matriculaController = TextEditingController();
 
   // METRAGEM
   final TextEditingController _metragemMinController = TextEditingController();
   final TextEditingController _metragemMaxController = TextEditingController();
-  final TextEditingController _numReformasController = TextEditingController(
-      text: '0'); // NOVO: Reformas (Texto para visualização)
+  final TextEditingController _numReformasController =
+      TextEditingController(text: '0');
 
   // FORMATADORES
   final MaskTextInputFormatter _cepFormatter = MaskTextInputFormatter(
@@ -179,7 +175,6 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
     });
   }
 
-  // FUNÇÃO PARA ABRIR PICKER (USADO PARA TIPO / FINALIDADE)
   void _showCupertinoPicker({
     required List<String> options,
     required String title,
@@ -331,7 +326,7 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                   _buildSectionHeader(theme, 'Localização'),
                   const SizedBox(height: 12),
 
-                  // CEP (Novo)
+                  // CEP
                   _buildTextField(
                     controller: _cepController,
                     hintText: 'CEP',
@@ -369,7 +364,7 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  // Logradouro (Antiga Rua)
+                  // Logradouro
                   _buildTextField(
                     controller: _logradouroController,
                     hintText: 'Logradouro',
@@ -381,7 +376,6 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
 
                   const SizedBox(height: 24),
 
-                  // FILTRO CPF PROPRIETÁRIO
                   _buildSectionHeader(theme, 'Proprietário (Filtro)'),
                   const SizedBox(height: 12),
                   _buildTextField(
@@ -614,8 +608,6 @@ class _FilterImovelPageState extends State<FilterImovelPage> {
       ),
     );
   }
-
-  // ==================== WIDGETS AUXILIARES (BASEADOS NO SEU PADRÃO) ====================
 
   Widget _buildSectionHeader(ThemeData theme, String title) {
     return Padding(

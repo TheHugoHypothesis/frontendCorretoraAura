@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/models/imovel_model.dart';
-import '../../data/models/contrato_model.dart';
 import 'package:aura_frontend/features/imovel_details/imovel_edit_page.dart';
 import 'package:intl/intl.dart';
 
@@ -65,15 +64,12 @@ class _PropertyPageState extends State<PropertyPage> {
     final primaryColor = Colors.black;
     final imovel = widget.imovel;
 
-    // Formatador de Moeda
     final currencyFormat =
         NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-    // Tenta converter o valor venal (string) para double para formatação limpa, ou usa a string direta
     String precoFormatado = widget.imovel.valorVenalFormatado;
 
-    final List<String> imagensExibicao = imovel.imagens.isNotEmpty
-        ? imovel.imagens
-        : ['assets/img1.jpg']; // Placeholder local se não tiver URL
+    final List<String> imagensExibicao =
+        imovel.imagens.isNotEmpty ? imovel.imagens : ['assets/img1.jpg'];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -97,7 +93,6 @@ class _PropertyPageState extends State<PropertyPage> {
                     },
                     itemBuilder: (context, index) {
                       return Hero(
-                        // Hero tag única apenas para a primeira imagem para evitar conflitos
                         tag: index == 0
                             ? "property-image-${imovel.matricula}"
                             : "img-$index",
@@ -249,7 +244,7 @@ class _PropertyPageState extends State<PropertyPage> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          widget.imovel.enderecoCompleto, // Endereço completo
+                          widget.imovel.enderecoCompleto,
                           style: const TextStyle(color: Colors.black54),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -291,7 +286,7 @@ class _PropertyPageState extends State<PropertyPage> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Comodidades (Chips)
+                  // Comodidades
                   if (widget.imovel.comodidades.isNotEmpty) ...[
                     const SizedBox(height: 20),
                     Text("Comodidades",
@@ -375,7 +370,6 @@ class _PropertyPageState extends State<PropertyPage> {
 
   // --- WIDGETS AUXILIARES ---
   Widget _buildImovelImage(String urlOrAsset) {
-    // Verifica se é URL (http)
     if (urlOrAsset.startsWith('http')) {
       print("Tentando carregar imagem: $urlOrAsset");
 

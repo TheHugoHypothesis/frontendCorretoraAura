@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart'; // NOVO IMPORT
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
   const PrivacyPolicyPage({super.key});
@@ -13,7 +13,6 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   bool _hasScrolledToBottom = false;
   final ScrollController _scrollController = ScrollController();
 
-  // --- TEXTO DA POLÍTICA AGORA É UMA ÚNICA STRING DE MARKDOWN VÁLIDO ---
   final String _policyMarkdown = """
 **Data de Vigência:** 9 de Novembro de 2025
 
@@ -99,9 +98,8 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
           CupertinoDialogAction(
             child: const Text("OK"),
             onPressed: () {
-              Navigator.pop(context); // 1. Fecha o alerta
-              if (onConfirm != null)
-                onConfirm(); // 2. Executa a ação final (fechar a tela)
+              Navigator.pop(context);
+              if (onConfirm != null) onConfirm();
             },
           ),
         ],
@@ -109,7 +107,6 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
     );
   }
 
-  // --- Método que define o estilo visual do Markdown ---
   MarkdownStyleSheet _buildMarkdownStyle(ThemeData theme, Color primaryColor) {
     return MarkdownStyleSheet.fromTheme(theme).copyWith(
       p: theme.textTheme.bodyLarge?.copyWith(
@@ -138,7 +135,6 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
         color: primaryColor.withOpacity(0.95),
         fontSize: 16,
       ),
-      // Adiciona padding para o conteúdo
       listIndent: 20,
     );
   }
@@ -155,7 +151,6 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
       backgroundColor: isDark ? Colors.black : Colors.white,
       body: Stack(
         children: [
-          // 1. Conteúdo Principal (Scrollable)
           CustomScrollView(
             controller: _scrollController,
             slivers: [
@@ -181,16 +176,13 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
                         selectable: false,
                         styleSheet: _buildMarkdownStyle(theme, primaryColor),
                       ),
-                      const SizedBox(
-                          height: 150), // Espaço para o botão flutuante
+                      const SizedBox(height: 150),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-
-          // 2. Barra de Ação Flutuante
           Positioned(
             bottom: 0,
             left: 0,
@@ -210,7 +202,7 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
               ),
               child: Row(
                 children: [
-                  // Botão de Negar (Secundário/Discreto)
+                  // Botão de Negar
                   Expanded(
                     child: CupertinoButton(
                       color: declineColor,
@@ -227,7 +219,7 @@ Ao clicar em "Aceitar", você declara ter lido, compreendido e concordado com o 
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Botão de Aceitar (Primário)
+                  // Botão de Aceitar
                   Expanded(
                     child: CupertinoButton(
                       color: _hasScrolledToBottom ? accentColor : declineColor,

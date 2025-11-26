@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'endpoints.dart';
+import 'constants.dart';
 
 class TokenManager {
   static const _storage = FlutterSecureStorage();
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
-  static const String baseUrl = 'http://127.0.0.1:8000';
 
   /// Salva novos tokens após login ou refresh
   static Future<void> saveTokens(String access, String refresh) async {
@@ -46,7 +46,6 @@ class TokenManager {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      // O Flask retorna 'access_token' e 'refresh_token'
       await saveTokens(data['access_token'], data['refresh_token']);
       return true;
     } else {
