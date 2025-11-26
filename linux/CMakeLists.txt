@@ -4,10 +4,10 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "real_estate_ui_tutorial")
+set(BINARY_NAME "aura_frontend")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.real_estate_ui_tutorial")
+set(APPLICATION_ID "com.example.aura_frontend")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -41,9 +41,8 @@ endif()
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_features(${TARGET} PUBLIC cxx_std_14)
-  target_compile_options(${TARGET} PRIVATE -Wall -Werror)
+  target_compile_options(${TARGET} PRIVATE -Wall -Werror -Wno-error=deprecated-literal-operator)
   target_compile_options(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:-O3>")
-  target_compile_options(${TARGET} PRIVATE -Wno-deprecated)
   target_compile_definitions(${TARGET} PRIVATE "$<$<NOT:$<CONFIG:Debug>>:NDEBUG>")
 endfunction()
 
